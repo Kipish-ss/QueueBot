@@ -1,3 +1,1 @@
-from .error_handler import dp
-
-__all__ = ["dp"]
+from . import error_handler
