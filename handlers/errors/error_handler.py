@@ -19,26 +19,26 @@ async def errors_handler(update, exception):
     """
 
     if isinstance(exception, CantDemoteChatCreator):
-        logging.debug("Can't demote chat creator")
+        logging.exception("Can't demote chat creator")
         return True
 
     if isinstance(exception, MessageNotModified):
-        logging.debug('Message is not modified')
+        logging.exception('Message is not modified')
         return True
     if isinstance(exception, MessageCantBeDeleted):
-        logging.debug('Message cant be deleted')
+        logging.exception('Message cant be deleted')
         return True
 
     if isinstance(exception, MessageToDeleteNotFound):
-        logging.debug('Message to delete not found')
+        logging.exception('Message to delete not found')
         return True
 
     if isinstance(exception, MessageTextIsEmpty):
-        logging.debug('MessageTextIsEmpty')
+        logging.exception('MessageTextIsEmpty')
         return True
 
     if isinstance(exception, Unauthorized):
-        logging.info(f'Unauthorized: {exception}')
+        logging.exception(f'Unauthorized: {exception}')
         return True
 
     if isinstance(exception, InvalidQueryID):
