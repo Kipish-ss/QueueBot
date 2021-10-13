@@ -6,8 +6,7 @@ from loader import dp
 
 @dp.message_handler(CommandHelp())
 async def bot_help(message: types.Message):
-    text = ("Список команд: ",
-            "/start - Начать диалог",
-            "/help - Получить справку")
+    text = ("I am queue_bot. ",
+            "Use me for making a queue.")
     
     await message.answer("\n".join(text))
