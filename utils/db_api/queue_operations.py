@@ -3,7 +3,7 @@ from data.config import DB
 import asyncio
 from data.config import min_priority
 
-flag = True
+
 async def add_user(user_id: int, user_name: str, number: int, priority: int) -> None:
     async with aiosqlite.connect(DB) as conn:
         query_1 = "INSERT INTO queue(id, user_name, number, priority) VALUES(?, ?, ?, ?)"
