@@ -26,7 +26,7 @@ async def find_max(priority: int) -> int:
         if priority > min_priority:
             await find_max(priority - 1)
         else:
-            await find_max(priority - 1)
+            max_num = 1
     return max_num
 
 
