@@ -2,6 +2,7 @@ import aiosqlite
 from data.config import DB
 import asyncio
 from data.config import min_priority
+import sqlite3
 
 
 async def add_user(user_id: int, user_name: str, number: int, priority: int) -> None:
@@ -13,21 +14,52 @@ async def add_user(user_id: int, user_name: str, number: int, priority: int) -> 
         await conn.commit()
 
 
-async def find_max(priority: int) -> int:
-    async with aiosqlite.connect(DB) as conn:
+# async def find_max(priority: int) -> int:
+    # async with aiosqlite.connect(DB) as conn:
+    #     query = "SELECT MAX(number) FROM queue WHERE priority = ?"
+    #     cursor: aiosqlite.Cursor
+    #     async with conn.execute(query, (priority,)) as cursor:
+    #         num_tuple = await cursor.fetchone()
+    # if num_tuple[0] is not None:
+    #     num = num_tuple[0]
+    #     max_num = num + 1
+    # else:
+    #     if priority > min_priority:
+    #         await find_max(priority - 1)
+    #     else:
+    #         max_num = 1
+    # return max_num
+    # async def find_max(priority: int) -> int:
+    #     # Found max num in DB and returns max num + 1
+    #     func = await find_max(priority - 1)
+    #     async with aiosqlite.connect(DB) as conn:
+    #         query = "SELECT MAX(number) FROM queue WHERE priority = ?"
+    #         cursor: aiosqlite.Cursor
+    #         async with conn.execute(query, (priority,)) as cursor:
+    #             num_tuple = await cursor.fetchone()
+    #     if num_tuple[0] is not None:
+    #         num = num_tuple[0]
+    #         max_num = num + 1
+    #     else:
+    #         if priority == min_priority:
+    #             max_num = 1
+    #             return max_num
+    #     return func
+def find_max(priority: int) -> int:
+    with sqlite3.connect(DB) as conn:
         query = "SELECT MAX(number) FROM queue WHERE priority = ?"
-        cursor: aiosqlite.Cursor
-        async with conn.execute(query, (priority,)) as cursor:
-            num_tuple = await cursor.fetchone()
-    if num_tuple[0] is not None:
-        num = num_tuple[0]
-        max_num = num + 1
-    else:
-        if priority > min_priority:
-            await find_max(priority - 1)
+        cursor = conn.cursor()
+        num_tuple = cursor.execute(query, (priority,)).fetchone()
+        cursor.close()
+        if num_tuple[0] is not None:
+            num = num_tuple[0]
+            max_num = num + 1
+            return max_num
         else:
-            max_num = 1
-    return max_num
+            if priority == min_priority:
+                max_num = 1
+                return max_num
+        return find_max(priority-1)
 
 
 async def is_present(user_id: int):
@@ -94,10 +126,15 @@ async def is_quit(user_id: int) -> bool:
     return True
 
 
-async def update_num(user_id: int, num: int) -> None:
+async def update_num(user_id: int, num: int, priority: int, change=False) -> None:
     async with aiosqlite.connect(DB) as conn:
-        query = "UPDATE queue SET number = ? WHERE id = ?"
-        await conn.execute(query, (num, user_id))
+        query_1 = "UPDATE queue SET number = ? WHERE id = ?"
+        query_2 = "UPDATE queue SET number = number + 1 WHERE priority > ?"
+        await conn.execute(query_1, (num, user_id))
+        if change:
+            query_3 = "UPDATE queue SET priority = ? WHERE id = ?"
+            await conn.execute(query_3, (priority, user_id))
+        await conn.execute(query_2, (priority,))
         await conn.commit()
 
 
@@ -114,11 +151,38 @@ async def get_user(num: int) -> str:
         cursor: aiosqlite.Cursor
         async with conn.execute(query, (num,)) as cursor:
             name_tpl = await cursor.fetchone()
-            if name_tpl[0] is not None:
+            if name_tpl is not None:
                 user_name = name_tpl[0]
+            else:
+                user_name = None
     return user_name
+
+
+async def get_priority(user_id: int) -> int:
+    async with aiosqlite.connect(DB) as conn:
+        query = "SELECT priority FROM queue WHERE id = ?"
+        cursor: aiosqlite.Cursor
+        async with conn.execute(query, (user_id,)) as cursor:
+            pr_tpl = await cursor.fetchone()
+    priority = pr_tpl[0]
+    return priority
+
+
+async def display_queue():
+    async with aiosqlite.connect(DB) as conn:
+        query = "SELECT user_name, number, priority FROM queue WHERE number is not NULL ORDER BY number ASC"
+        cursor: aiosqlite.Cursor
+        async with conn.execute(query) as cursor:
+            queue_tpl = await cursor.fetchall()
+    if queue_tpl:
+        queue_dict = {}
+        for elem in queue_tpl:
+            queue_dict[elem[0]] = elem[1:]
+        return queue_dict
+    else:
+        return None
 
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(find_max())
+    # loop.run_until_complete(find_max(priority=1))
