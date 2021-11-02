@@ -45,21 +45,36 @@ async def add_user(user_id: int, user_name: str, number: int, priority: int) -> 
     #             max_num = 1
     #             return max_num
     #     return func
-def find_max(priority: int) -> int:
+def find_max(priority: int, user_id: int = 0) -> int:
     with sqlite3.connect(DB) as conn:
-        query = "SELECT MAX(number) FROM queue WHERE priority = ?"
-        cursor = conn.cursor()
-        num_tuple = cursor.execute(query, (priority,)).fetchone()
-        cursor.close()
-        if num_tuple[0] is not None:
-            num = num_tuple[0]
-            max_num = num + 1
-            return max_num
-        else:
-            if priority == min_priority:
-                max_num = 1
+        if user_id == 0:
+            query = "SELECT MAX(number) FROM queue WHERE priority = ?"
+            cursor = conn.cursor()
+            num_tuple = cursor.execute(query, (priority,)).fetchone()
+            cursor.close()
+            if num_tuple[0] is not None:
+                num = num_tuple[0]
+                max_num = num + 1
                 return max_num
-        return find_max(priority-1)
+            else:
+                if priority == min_priority:
+                    max_num = 1
+                    return max_num
+            return find_max(priority-1)
+        else:
+            query = "SELECT MAX(number) FROM queue WHERE priority = ? AND id != ?"
+            cursor = conn.cursor()
+            num_tuple = cursor.execute(query, (priority, user_id)).fetchone()
+            cursor.close()
+            if num_tuple[0] is not None:
+                num = num_tuple[0]
+                max_num = num + 1
+                return max_num
+            else:
+                if priority == min_priority:
+                    max_num = 1
+                    return max_num
+            return find_max(priority - 1, user_id)
 
 
 async def is_present(user_id: int):
@@ -90,10 +105,14 @@ async def update_queue(num: int) -> None:
         await conn.commit()
 
 
-async def remove_user(user_id: int) -> None:
+async def remove_user(user_id: int = 0, num: int = 0) -> None:
     async with aiosqlite.connect(DB) as conn:
-        query = "UPDATE queue SET number = NULL, quit = 1 WHERE id = ?"
-        await conn.execute(query, (user_id,))
+        if num > 0:
+            query = "UPDATE queue SET number = NULL, quit = 1 WHERE number = ?"
+            await conn.execute(query, (num,))
+        else:
+            query = "UPDATE queue SET number = NULL, quit = 1 WHERE id = ?"
+            await conn.execute(query, (user_id,))
         await conn.commit()
 
 
@@ -181,6 +200,17 @@ async def display_queue():
         return queue_dict
     else:
         return None
+
+
+async def is_empty():
+    async with aiosqlite.connect(DB) as conn:
+        query = 'SELECT COUNT(*) FROM queue WHERE number is not NULL'
+        cursor: aiosqlite.Cursor
+        async with conn.execute(query) as cursor:
+            count_tpl = await cursor.fetchone()
+    if count_tpl[0]:
+        return False
+    return True
 
 
 if __name__ == '__main__':

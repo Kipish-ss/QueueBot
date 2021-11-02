@@ -13,7 +13,8 @@ async def set_default_commands(dp):
             types.BotCommand("show_history", "Show count of the people who left the queue."),
             types.BotCommand("delete_queue", "Delete current queue"),
             types.BotCommand('show_queue', 'Show queue'),
-            types.BotCommand('remove_user', 'Remove user.')
+            types.BotCommand('remove_user', 'Remove user.'),
+            types.BotCommand('next', 'Remove the first person in the queue.')
             # types.BotCommand("add_to_queue", "Add person to the queue.")
         ]
     )
