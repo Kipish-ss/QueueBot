@@ -186,4 +186,3 @@ async def is_empty() -> bool:
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    # loop.run_until_complete(find_max(priority=1))

@@ -32,12 +32,18 @@ async def countdown():
 
 
 async def on_startup(dispatcher):
-    await set_default_commands(dispatcher)
-    # await countdown()
-    # await on_startup_notify(dispatcher)
+    try:
+        await set_default_commands(dispatcher)
+    except Exception:
+        logger.exception('An unexpected error occured')
 
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(on_startup_notify(dp))
-    executor.start_polling(dispatcher=dp, on_startup=on_startup, skip_updates=True)
+    try:
+        asyncio.get_event_loop().run_until_complete(on_startup_notify(dp))
+        executor.start_polling(dispatcher=dp, on_startup=on_startup, skip_updates=True)
+    except TimeoutError as ex:
+        logger.exception(ex)
+    except Exception:
+        logger.exception('An unexpected error occured')
 
