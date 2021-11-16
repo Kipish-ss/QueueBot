@@ -1,3 +1,5 @@
+import ctypes
+
 import aiosqlite
 from data.config import DB
 import asyncio
@@ -14,37 +16,6 @@ async def add_user(user_id: int, user_name: str, number: int, priority: int) -> 
         await conn.commit()
 
 
-# async def find_max(priority: int) -> int:
-    # async with aiosqlite.connect(DB) as conn:
-    #     query = "SELECT MAX(number) FROM queue WHERE priority = ?"
-    #     cursor: aiosqlite.Cursor
-    #     async with conn.execute(query, (priority,)) as cursor:
-    #         num_tuple = await cursor.fetchone()
-    # if num_tuple[0] is not None:
-    #     num = num_tuple[0]
-    #     max_num = num + 1
-    # else:
-    #     if priority > min_priority:
-    #         await find_max(priority - 1)
-    #     else:
-    #         max_num = 1
-    # return max_num
-    # async def find_max(priority: int) -> int:
-    #     # Found max num in DB and returns max num + 1
-    #     func = await find_max(priority - 1)
-    #     async with aiosqlite.connect(DB) as conn:
-    #         query = "SELECT MAX(number) FROM queue WHERE priority = ?"
-    #         cursor: aiosqlite.Cursor
-    #         async with conn.execute(query, (priority,)) as cursor:
-    #             num_tuple = await cursor.fetchone()
-    #     if num_tuple[0] is not None:
-    #         num = num_tuple[0]
-    #         max_num = num + 1
-    #     else:
-    #         if priority == min_priority:
-    #             max_num = 1
-    #             return max_num
-    #     return func
 def find_max(priority: int, user_id: int = 0) -> int:
     with sqlite3.connect(DB) as conn:
         if user_id == 0:
@@ -77,7 +48,7 @@ def find_max(priority: int, user_id: int = 0) -> int:
             return find_max(priority - 1, user_id)
 
 
-async def is_present(user_id: int):
+async def is_present(user_id: int) -> bool:
     async with aiosqlite.connect(DB) as conn:
         query = "SELECT id FROM queue WHERE id = ?"
         cursor: aiosqlite.Cursor
@@ -202,7 +173,7 @@ async def display_queue():
         return None
 
 
-async def is_empty():
+async def is_empty() -> bool:
     async with aiosqlite.connect(DB) as conn:
         query = 'SELECT COUNT(*) FROM queue WHERE number is not NULL'
         cursor: aiosqlite.Cursor

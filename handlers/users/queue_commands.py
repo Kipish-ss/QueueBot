@@ -8,14 +8,15 @@ from keyboards.inline.options import get_add_keyboard, get_lab_keyboard
 from keyboards.inline.callbackdata import options_callback, lab_callback
 from aiogram.utils.exceptions import MessageCantBeDeleted
 import logging
+from utils.misc.logging import file_error_handler
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.DEBUG)
-file_handler = logging.FileHandler('handlers/errors/errors.log')
-file_handler.setLevel(logging.ERROR)
-formatter = logging.Formatter(u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+# file_handler = logging.FileHandler('handlers/errors/errors.log')
+# file_handler.setLevel(logging.ERROR)
+# formatter = logging.Formatter(u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s')
+# file_handler.setFormatter(formatter)
+logger.addHandler(file_error_handler)
 
 
 @dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=["delete_queue"])
@@ -35,14 +36,13 @@ async def add_to_queue(message: types.Message):
                 user_name = message.from_user.full_name
             try:
                 await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
-                    user_id=message.from_user.id, user_name=user_name, chat_id=message.chat.id, message_id=message.message_id,
+                    user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
                     present=present))
             except ValueError:
                 logger.error('Resulted callback data is too long!\nPerhaps username is too long.')
                 user_name = message.from_user.first_name
                 await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
-                    user_id=message.from_user.id, user_name=user_name, chat_id=message.chat.id,
-                    message_id=message.message_id,
+                    user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
                     present=present))
         else:
             quit = await is_quit(message.from_user.id)
@@ -195,7 +195,7 @@ async def change_lab(message: types.Message):
                 user_name = (message.from_user.username if message.from_user.username is not None
                              else message.from_user.full_name)
                 await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
-                    user_id=message.from_user.id, user_name=user_name, chat_id=message.chat.id,
+                    user_id=message.from_user.id, user_name=user_name,
                     message_id=message.message_id, present=present))
             else:
                 await message.reply('You have quit the queue. Use /join_queue command if you want to rejoin the queue.')
@@ -266,7 +266,6 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
     if user_id == call.from_user.id:
         user_name = callback_data.get("user_name")
         priority = int(callback_data.get("pr_num"))
-        chat_id = int(callback_data.get("chat_id"))
         message_id = int(callback_data.get("message_id"))
         present = callback_data.get("present")
         if present == 'False':
@@ -284,6 +283,7 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
         await call.message.answer(f"@{user_name} is {num} in the queue with lab {priority}.\nUse /quit_queue commnad "
                                   f"when you finish your lab.\nUse /change_lab command to change your lab number.")
         try:
+            chat_id = call.message.chat.id
             await bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
             await bot.delete_message(message_id=message_id, chat_id=chat_id)
         except MessageCantBeDeleted:
