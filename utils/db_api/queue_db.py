@@ -1,5 +1,3 @@
-import ctypes
-
 import aiosqlite
 from data.config import DB
 import asyncio
