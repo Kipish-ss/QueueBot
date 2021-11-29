@@ -1,6 +1,6 @@
 from loader import dp
 from aiogram import types
-from utils.db_api.queue_operations import add_user, find_max, is_present, get_number, update_queue, remove_user, \
+from utils.db_api.queue_db import add_user, find_max, is_present, get_number, update_queue, remove_user, \
     reset_queue, show_count, is_quit, update_num, get_user, get_priority, display_queue, reset_quit, is_empty
 from data.config import ADMINS, CHAT
 from loader import bot
@@ -11,11 +11,7 @@ import logging
 from utils.misc.logging import file_error_handler
 
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.DEBUG)
-# file_handler = logging.FileHandler('handlers/errors/errors.log')
-# file_handler.setLevel(logging.ERROR)
-# formatter = logging.Formatter(u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s')
-# file_handler.setFormatter(formatter)
+logger.setLevel(level=logging.INFO)
 logger.addHandler(file_error_handler)
 
 
@@ -280,7 +276,7 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
                 await update_num(user_id=user_id, num=num, priority=priority, change=True)
             else:
                 num = num_previous
-        await call.message.answer(f"@{user_name} is {num} in the queue with lab {priority}.\nUse /quit_queue commnad "
+        await call.message.answer(f"@{user_name} is {num} in the queue with lab {priority}.\nUse /quit_queue command "
                                   f"when you finish your lab.\nUse /change_lab command to change your lab number.")
         try:
             chat_id = call.message.chat.id
