@@ -1,7 +1,7 @@
 import aiosqlite
 from data.config import DB
 import asyncio
-from data.config import min_priority
+from data.config import MIN_PRIORITY
 import sqlite3
 
 
@@ -26,7 +26,7 @@ def find_max(priority: int, user_id: int = 0) -> int:
                 max_num = num + 1
                 return max_num
             else:
-                if priority == min_priority:
+                if priority == MIN_PRIORITY:
                     max_num = 1
                     return max_num
             return find_max(priority-1)
@@ -40,7 +40,7 @@ def find_max(priority: int, user_id: int = 0) -> int:
                 max_num = num + 1
                 return max_num
             else:
-                if priority == min_priority:
+                if priority == MIN_PRIORITY:
                     max_num = 1
                     return max_num
             return find_max(priority - 1, user_id)
@@ -133,11 +133,16 @@ async def reset_quit(user_id: int) -> None:
         await conn.commit()
 
 
-async def get_user(num: int) -> str:
+async def get_user(num: int = 0, user_id: int = 0) -> str:
     async with aiosqlite.connect(DB) as conn:
-        query = "SELECT user_name FROM queue WHERE number = ?"
+        if num != 0:
+            query = "SELECT user_name FROM queue WHERE number = ?"
+            param = num
+        else:
+            query = "SELECT user_name FROM queue WHERE id = ?"
+            param = user_id
         cursor: aiosqlite.Cursor
-        async with conn.execute(query, (num,)) as cursor:
+        async with conn.execute(query, (param,)) as cursor:
             name_tpl = await cursor.fetchone()
             if name_tpl is not None:
                 user_name = name_tpl[0]

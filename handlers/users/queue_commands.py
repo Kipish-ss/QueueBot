@@ -57,6 +57,16 @@ async def add_to_queue(message: types.Message):
         logger.exception(ex)
 
 
+# @dp.message_handler(commands=["add_lab"])
+# async def add_lab(message: types.Message):
+#     user_id = message.from_user.id
+#     present = await is_present(user_id)
+#     if present:
+#         user_name = await get_user(user_id=user_id)
+#         await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
+#             user_id=user_id, user_name=user_name, message_id=message.message_id,
+#             present=present))
+
 @dp.message_handler(commands=["show_number"])
 async def show_number(message: types.Message):
     try:
@@ -276,8 +286,9 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
                 await update_num(user_id=user_id, num=num, priority=priority, change=True)
             else:
                 num = num_previous
-        await call.message.answer(f"@{user_name} is {num} in the queue with lab {priority}.\nUse /quit_queue command "
-                                  f"when you finish your lab.\nUse /change_lab command to change your lab number.")
+        text = f"You are {num} in the queue with lab {priority}.\nUse /quit_queue command " \
+               f"when you finish your lab.\nUse /change_lab command to change your lab number."
+        await bot.answer_callback_query(call.id, text=text, show_alert=True)
         try:
             chat_id = call.message.chat.id
             await bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)

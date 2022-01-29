@@ -8,5 +8,4 @@ from loader import dp
 async def bot_help(message: types.Message):
     text = ("I am queue_bot. ",
             "Use me for making a queue.")
-    
     await message.answer("\n".join(text))
