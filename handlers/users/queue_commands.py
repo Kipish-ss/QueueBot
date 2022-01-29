@@ -57,16 +57,6 @@ async def add_to_queue(message: types.Message):
         logger.exception(ex)
 
 
-# @dp.message_handler(commands=["add_lab"])
-# async def add_lab(message: types.Message):
-#     user_id = message.from_user.id
-#     present = await is_present(user_id)
-#     if present:
-#         user_name = await get_user(user_id=user_id)
-#         await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
-#             user_id=user_id, user_name=user_name, message_id=message.message_id,
-#             present=present))
-
 @dp.message_handler(commands=["show_number"])
 async def show_number(message: types.Message):
     try:
