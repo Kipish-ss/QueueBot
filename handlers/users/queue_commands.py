@@ -218,7 +218,7 @@ async def remove_first(message: types.Message):
                 if second_name is not None:
                     text += f"\n@{second_name} is after @{first_name}"
                 else:
-                    text += "There is nobody else in the queue."
+                    text += " There is nobody else in the queue."
             else:
                 text += "This is the end of the queue."
             await message.answer(text)
