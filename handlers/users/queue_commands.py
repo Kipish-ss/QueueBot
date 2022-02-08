@@ -229,9 +229,11 @@ async def change_lab(message: types.Message):
                 msg = await message.reply('You have quit the queue. Use /join_queue command '
                                           'if you want to rejoin the queue.')
                 await save_msg(msg)
+                await save_msg(message)
         else:
             msg = await message.reply("You are not in the queue.\nUse /join_queue command to join the queue.")
             await save_msg(msg)
+            await save_msg(message)
     except Exception:
         logger.exception('An unexpected error occurred.')
         msg = await message.reply('An unexpected error occurred.')
@@ -257,6 +259,7 @@ async def remove_first(message: types.Message):
                     text += " There is nobody else in the queue."
             else:
                 text += "This is the end of the queue."
+                await save_msg(message)
             msg = await message.answer(text)
             try:
                 await bot.delete_message(chat_id=CHAT, message_id=message.message_id)
