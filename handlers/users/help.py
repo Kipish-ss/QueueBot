@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters.builtin import CommandHelp
 from loader import dp
 from utils.misc.logging import file_error_handler
 import logging
-from queue_commands import save_msg
+from .queue_commands import save_msg
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
