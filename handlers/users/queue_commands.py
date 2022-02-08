@@ -18,7 +18,7 @@ logger.addHandler(file_error_handler)
 
 async def save_msg(message: types.Message):
     try:
-        await save_msg_id(message.message_id)
+        await save_msg_id(message.message_id, message.chat.id)
     except Exception as ex:
         logger.exception(ex)
 
@@ -277,7 +277,7 @@ async def remove_first(message: types.Message):
 async def clear_messages(message: types.Message):
     try:
         await save_msg(message)
-        id_list = await get_messages()
+        id_list = await get_messages(message.chat.id)
         if id_list:
             for msg_id in id_list:
                 try:
