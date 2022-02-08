@@ -3,7 +3,7 @@ from aiogram import types
 from utils.db_api.queue_db import add_user, find_max, is_present, get_number, update_queue, \
     remove_user, reset_queue, show_count, is_quit, update_num, get_user, get_priority, \
     display_queue, reset_quit, is_empty, save_msg_id, get_messages
-from data.config import ADMINS, CHAT
+from data.config import ADMINS
 from loader import bot
 from keyboards.inline.options import get_add_keyboard, get_lab_keyboard
 from keyboards.inline.callbackdata import options_callback, lab_callback
@@ -57,17 +57,16 @@ async def add_to_queue(message: types.Message):
             if quit:
                 user_name = (message.from_user.username if message.from_user.username is not None
                              else message.from_user.full_name)
-                msg = await bot.send_message(int(ADMINS[0]), text=f"Add {user_name}?", reply_markup=get_add_keyboard(
+                await bot.send_message(int(ADMINS[0]), text=f"Add {user_name}?", reply_markup=get_add_keyboard(
                     message.from_user.id, user_name, message.chat.id, priority=priority))
-                await save_msg_id(msg.message_id)
                 msg = await message.reply("You have quit the queue. Wait for @kirish_ss to add you or wait for a new queue.")
-                await save_msg_id(msg.message_id)
+                await save_msg(msg)
             else:
-                await save_msg_id(message.message_id)
                 num = await get_number(message.from_user.id)
                 msg = await message.reply(f'You are already in the queue. Your number is {num}, your lab is {priority}.\nUse '
                                     f'/quit_queue command when you finish your lab.')
                 await save_msg(msg)
+            await save_msg(message)
     except Exception as ex:
         logger.exception(ex)
 
@@ -156,7 +155,7 @@ async def delete_user(message: types.Message):
                         text += "This is the end of the queue."
                     msg = await message.reply_to_message.reply(text)
                     try:
-                        await bot.delete_message(chat_id=CHAT, message_id=message.message_id)
+                        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
                     except MessageCantBeDeleted:
                         logger.error('Message with /remove_user command cannot be deleted.')
                 else:
@@ -164,7 +163,7 @@ async def delete_user(message: types.Message):
             else:
                 msg = await message.reply_to_message.reply("The user is not in the queue.")
                 try:
-                    await bot.delete_message(chat_id=CHAT, message_id=message.message_id)
+                    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
                 except Exception as ex:
                     logger.exception(ex)
         else:
@@ -259,14 +258,14 @@ async def remove_first(message: types.Message):
                     text += " There is nobody else in the queue."
             else:
                 text += "This is the end of the queue."
-                await save_msg(message)
             msg = await message.answer(text)
             try:
-                await bot.delete_message(chat_id=CHAT, message_id=message.message_id)
+                await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
             except MessageCantBeDeleted:
                 logger.error(f'Message with command /next cannot be deleted.')
         else:
             msg = await message.reply('The queue is empty.')
+            await save_msg(message)
         await save_msg(msg)
     except Exception:
         logger.exception('An unexpected error occurred')
@@ -282,7 +281,7 @@ async def clear_messages(message: types.Message):
         if id_list:
             for msg_id in id_list:
                 try:
-                    await bot.delete_message(message_id=msg_id, chat_id=CHAT)
+                    await bot.delete_message(message_id=msg_id, chat_id=message.chat.id)
                 except Exception:
                     logger.exception(f'Message cannot be deleted.')
     except Exception:
