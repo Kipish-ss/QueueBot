@@ -14,6 +14,7 @@ async def set_default_commands(dp):
             types.BotCommand("delete_queue", "Delete current queue"),
             types.BotCommand('show_queue', 'Show queue'),
             types.BotCommand('remove_user', 'Remove user.'),
-            types.BotCommand('next', 'Remove the first person in the queue.')
+            types.BotCommand('next', 'Remove the first person in the queue.'),
+            types.BotCommand('clear', 'Clear current session')
         ]
     )
