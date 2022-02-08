@@ -5,6 +5,28 @@ from data.config import MIN_PRIORITY
 import sqlite3
 
 
+async def save_msg_id(message_id: int) -> None:
+    async with aiosqlite.connect(DB) as conn:
+        query = "INSERT INTO message_id(ID) VALUES (?)"
+        await conn.execute(query, (message_id,))
+        await conn.commit()
+
+
+async def get_messages():
+    async with aiosqlite.connect(DB) as conn:
+        query = "SELECT * FROM message_id ORDER BY ID ASC"
+        async with conn.execute(query) as cursor:
+            id_tpl = await cursor.fetchall()
+        if id_tpl:
+            id_list = [x[0] for x in id_tpl]
+            query = "DELETE FROM message_id"
+            await conn.execute(query)
+            await conn.commit()
+        else:
+            id_list = None
+    return id_list
+
+
 async def add_user(user_id: int, user_name: str, number: int, priority: int) -> None:
     async with aiosqlite.connect(DB) as conn:
         query_1 = "INSERT INTO queue(id, user_name, number, priority) VALUES(?, ?, ?, ?)"
