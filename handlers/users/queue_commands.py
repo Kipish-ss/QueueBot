@@ -260,10 +260,13 @@ async def clear_messages(message: types.Message):
     try:
         if id_list:
             for msg_id in id_list:
-                await bot.delete_message(message_id=msg_id, chat_id=CHAT)
+                try:
+                    await bot.delete_message(message_id=msg_id, chat_id=CHAT)
+                except Exception:
+                    logger.exception(f'Message cannot be deleted.')
         await bot.delete_message(message_id=message.message_id, chat_id=CHAT)
-    except MessageCantBeDeleted:
-        logger.error(f'Messages cannot be deleted.')
+    except Exception:
+        logger.exception(f'Message cannot be deleted.')
 
 
 @dp.callback_query_handler(options_callback.filter(action="add"))
