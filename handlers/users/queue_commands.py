@@ -16,11 +16,19 @@ logger.setLevel(level=logging.INFO)
 logger.addHandler(file_error_handler)
 
 
+async def save_msg(message: types.Message):
+    try:
+        await save_msg_id(message.message_id)
+    except Exception as ex:
+        logger.exception(ex)
+
+
 @dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=["delete_queue"])
 async def delete_queue(message: types.Message):
+    await save_msg(message)
     await reset_queue()
     msg = await message.reply("The queue was deleted.")
-    await save_msg_id(msg.message_id)
+    await save_msg(msg)
 
 
 @dp.message_handler(commands=["join_queue"])
@@ -36,14 +44,13 @@ async def add_to_queue(message: types.Message):
                 msg = await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
                     user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
                     present=present))
-                await save_msg_id(msg.message_id)
+                await save_msg(msg)
             except ValueError:
                 logger.error('Resulted callback data is too long!\nPerhaps username is too long.')
                 user_name = message.from_user.first_name
-                msg = await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
+                await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
                     user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
                     present=present))
-                await save_msg_id(msg.message_id)
         else:
             quit = await is_quit(message.from_user.id)
             priority = await get_priority(message.from_user.id)
@@ -56,10 +63,11 @@ async def add_to_queue(message: types.Message):
                 msg = await message.reply("You have quit the queue. Wait for @kirish_ss to add you or wait for a new queue.")
                 await save_msg_id(msg.message_id)
             else:
+                await save_msg_id(message.message_id)
                 num = await get_number(message.from_user.id)
                 msg = await message.reply(f'You are already in the queue. Your number is {num}, your lab is {priority}.\nUse '
                                     f'/quit_queue command when you finish your lab.')
-                await save_msg_id(msg.message_id)
+                await save_msg(msg)
     except Exception as ex:
         logger.exception(ex)
 
@@ -67,6 +75,7 @@ async def add_to_queue(message: types.Message):
 @dp.message_handler(commands=["show_number"])
 async def show_number(message: types.Message):
     try:
+        await save_msg(message)
         present = await is_present(message.from_user.id)
         if present:
             quit = await is_quit(message.from_user.id)
@@ -78,16 +87,17 @@ async def show_number(message: types.Message):
                 msg = await message.reply("You have quit the queue. Use /join_queue command.")
         else:
             msg = await message.reply("You are not in the queue yet. Use /join_queue command to join the queue.")
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
     except Exception:
         logger.exception('An unexpected error occurred.')
         msg = await message.reply('An unexpected error occurred.')
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
 
 
 @dp.message_handler(commands=["quit_queue"])
 async def leave_queue(message: types.Message):
     try:
+        await save_msg(message)
         present = await is_present(message.from_user.id)
         if present:
             quit = await is_quit(message.from_user.id)
@@ -111,16 +121,17 @@ async def leave_queue(message: types.Message):
                 msg = await message.reply("You have already quit the queue.\nIf you want to rejoin, use /join_queue command.")
         else:
             msg = await message.reply("You are not in the queue.")
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
     except Exception:
         logger.exception('An unexpected error occurred.')
         msg = await message.reply('An unexpected error occurred.')
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
 
 
 @dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=['remove_user'])
 async def delete_user(message: types.Message):
     try:
+        await save_msg(message)
         if message.reply_to_message is not None:
             present = await is_present(message.reply_to_message.from_user.id)
             if present:
@@ -152,19 +163,23 @@ async def delete_user(message: types.Message):
                     msg = await message.reply_to_message.reply("This user has already been removed from the queue.")
             else:
                 msg = await message.reply_to_message.reply("The user is not in the queue.")
-                await bot.delete_message(chat_id=CHAT, message_id=message.message_id)
+                try:
+                    await bot.delete_message(chat_id=CHAT, message_id=message.message_id)
+                except Exception as ex:
+                    logger.exception(ex)
         else:
             msg = await message.reply("This command must be sent as a reply.")
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
     except Exception:
         logger.exception("An unexpected error occurred.")
         msg = await message.reply("An unexpected error occurred.")
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
 
 
 @dp.message_handler(commands='show_queue')
 async def show_queue(message: types.Message):
     try:
+        await save_msg(message)
         queue = await display_queue()
         if queue is not None:
             text = ""
@@ -176,22 +191,23 @@ async def show_queue(message: types.Message):
             msg = await message.reply(text)
         else:
             msg = await message.reply("The queue is empty.")
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
     except Exception:
         logger.exception("An unexpected error occurred.")
         msg = await message.reply("An unexpected error occurred.")
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
 
 
 @dp.message_handler(commands=["show_history"])
 async def show_queue_history(message: types.Message):
     try:
+        await save_msg(message)
         count = await show_count()
         if count != 1:
             msg = await message.reply(f"{count} people have already left the queue.")
         else:
             msg = await message.reply(f"{count} person has already left the queue.")
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
     except Exception:
         logger.exception('An unexpected error occurred.')
 
@@ -206,19 +222,20 @@ async def change_lab(message: types.Message):
             if not quit:
                 user_name = (message.from_user.username if message.from_user.username is not None
                              else message.from_user.full_name)
-                msg = await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
+                await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
                     user_id=message.from_user.id, user_name=user_name,
                     message_id=message.message_id, present=present))
             else:
                 msg = await message.reply('You have quit the queue. Use /join_queue command '
                                           'if you want to rejoin the queue.')
+                await save_msg(msg)
         else:
             msg = await message.reply("You are not in the queue.\nUse /join_queue command to join the queue.")
-        await save_msg_id(msg.message_id)
+            await save_msg(msg)
     except Exception:
         logger.exception('An unexpected error occurred.')
         msg = await message.reply('An unexpected error occurred.')
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
 
 
 @dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=['next'])
@@ -247,26 +264,26 @@ async def remove_first(message: types.Message):
                 logger.error(f'Message with command /next cannot be deleted.')
         else:
             msg = await message.reply('The queue is empty.')
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
     except Exception:
         logger.exception('An unexpected error occurred')
         msg = await message.reply('An unexpected error occurred')
-        await save_msg_id(msg.message_id)
+        await save_msg(msg)
 
 
 @dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=['clear'])
 async def clear_messages(message: types.Message):
-    id_list = await get_messages()
     try:
+        await save_msg(message)
+        id_list = await get_messages()
         if id_list:
             for msg_id in id_list:
                 try:
                     await bot.delete_message(message_id=msg_id, chat_id=CHAT)
                 except Exception:
                     logger.exception(f'Message cannot be deleted.')
-        await bot.delete_message(message_id=message.message_id, chat_id=CHAT)
     except Exception:
-        logger.exception(f'Message cannot be deleted.')
+        logger.exception(f'An unexpected error occurred.')
 
 
 @dp.callback_query_handler(options_callback.filter(action="add"))
@@ -316,8 +333,7 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
                 num = num_previous
         text = f"You are {num} in the queue with lab {priority}.\nUse /quit_queue command " \
                f"when you finish your lab.\nUse /change_lab command to change your lab number."
-        msg = await bot.answer_callback_query(call.id, text=text, show_alert=True)
-        await save_msg_id(msg.message_id)
+        await bot.answer_callback_query(call.id, text=text, show_alert=True)
         try:
             chat_id = call.message.chat.id
             await bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
