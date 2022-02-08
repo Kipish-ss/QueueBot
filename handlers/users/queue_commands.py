@@ -265,13 +265,6 @@ async def clear_messages(message: types.Message):
     except MessageCantBeDeleted:
         logger.error(f'Messages cannot be deleted.')
 
-    # chat = await bot.get_chat(message.chat.id)
-    # msg = types.Message(message_id=start_id, chat=chat.id)
-    #
-    # print(msg.text)
-    # for msg_id in range(start_id, end_id):
-    #     if bot.
-
 
 @dp.callback_query_handler(options_callback.filter(action="add"))
 async def approve_user(call: types.CallbackQuery, callback_data: dict):
