@@ -1,6 +1,6 @@
 from aiogram import types
 from aiogram.dispatcher.filters.builtin import CommandHelp
-
+from utils.db_api.queue_db import save_msg_id
 from loader import dp
 
 
@@ -8,4 +8,5 @@ from loader import dp
 async def bot_help(message: types.Message):
     text = ("I am queue_bot. ",
             "Use me for making a queue.")
-    await message.answer("\n".join(text))
+    msg = await message.answer("\n".join(text))
+    await save_msg_id(msg.message_id)
