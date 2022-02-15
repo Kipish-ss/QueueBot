@@ -19,8 +19,8 @@ async def get_messages(chat_id: int):
             id_tpl = await cursor.fetchall()
         if id_tpl:
             id_list = [x[0] for x in id_tpl]
-            query = "DELETE FROM messages"
-            await conn.execute(query)
+            query = "DELETE FROM messages WHERE chat_id = ?"
+            await conn.execute(query, (chat_id,))
             await conn.commit()
         else:
             id_list = None

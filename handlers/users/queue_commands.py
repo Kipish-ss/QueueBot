@@ -130,7 +130,6 @@ async def leave_queue(message: types.Message):
 @dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=['remove_user'])
 async def delete_user(message: types.Message):
     try:
-        await save_msg(message)
         if message.reply_to_message is not None:
             present = await is_present(message.reply_to_message.from_user.id)
             if present:
@@ -159,6 +158,7 @@ async def delete_user(message: types.Message):
                     except MessageCantBeDeleted:
                         logger.error('Message with /remove_user command cannot be deleted.')
                 else:
+                    await save_msg(message)
                     msg = await message.reply_to_message.reply("This user has already been removed from the queue.")
             else:
                 msg = await message.reply_to_message.reply("The user is not in the queue.")
@@ -167,6 +167,7 @@ async def delete_user(message: types.Message):
                 except Exception as ex:
                     logger.exception(ex)
         else:
+            await save_msg(message)
             msg = await message.reply("This command must be sent as a reply.")
         await save_msg(msg)
     except Exception:
@@ -297,7 +298,7 @@ async def approve_user(call: types.CallbackQuery, callback_data: dict):
     num = find_max(priority=priority)
     await update_num(user_id=user_id, num=num, priority=priority)
     msg = await bot.send_message(chat_id, text=f'@{user_name} is {num} in the queue with lab {priority}.')
-    await save_msg_id(msg.message_id)
+    await save_msg(msg)
     await reset_quit(user_id)
     await call.message.edit_reply_markup()
     await bot.delete_message(message_id=call.message.message_id, chat_id=int(ADMINS[0]))
@@ -309,7 +310,7 @@ async def reject_user(call: types.CallbackQuery, callback_data: dict):
     chat_id = callback_data.get("chat_id")
     await call.message.reply(f'@{user_name} has not been added to the queue.')
     msg = await bot.send_message(chat_id, text=f'@{user_name} has not been added to the queue.')
-    await save_msg_id(msg.message_id)
+    await save_msg(msg)
     await call.message.edit_reply_markup()
 
 

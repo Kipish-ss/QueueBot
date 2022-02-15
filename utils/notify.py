@@ -4,7 +4,6 @@ import time
 from utils.misc.logging import file_info_handler, file_error_handler
 import logging
 from aiogram.utils.exceptions import BadRequest
-from utils.db_api.queue_db import save_msg_id
 from handlers.users.queue_commands import save_msg
 
 logger = logging.getLogger(__name__)
