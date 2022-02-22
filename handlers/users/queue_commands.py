@@ -41,10 +41,9 @@ async def add_to_queue(message: types.Message):
             else:
                 user_name = message.from_user.full_name
             try:
-                msg = await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
+                await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
                     user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
                     present=present))
-                await save_msg(msg)
             except ValueError:
                 logger.error('Resulted callback data is too long!\nPerhaps username is too long.')
                 user_name = message.from_user.first_name
@@ -274,7 +273,8 @@ async def remove_first(message: types.Message):
         await save_msg(msg)
 
 
-@dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=['clear'])
+@dp.message_handler(lambda message: str(message.from_user.id) in ADMINS or message.from_user.id == message.chat.id,
+                    commands=['clear'])
 async def clear_messages(message: types.Message):
     try:
         await save_msg(message)
