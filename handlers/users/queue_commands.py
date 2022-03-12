@@ -23,11 +23,14 @@ async def save_msg(message: types.Message):
         logger.exception(ex)
 
 
-@dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=["delete_queue"])
+@dp.message_handler(commands=["delete_queue"])
 async def delete_queue(message: types.Message):
+    if str(message.from_user.id) in ADMINS:
+        await reset_queue()
+        msg = await message.reply("The queue was deleted.")
+    else:
+        msg = await message.reply("You do not have rights to use this command.")
     await save_msg(message)
-    await reset_queue()
-    msg = await message.reply("The queue was deleted.")
     await save_msg(msg)
 
 
@@ -126,52 +129,57 @@ async def leave_queue(message: types.Message):
         await save_msg(msg)
 
 
-@dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=['remove_user'])
+@dp.message_handler(commands=['remove_user'])
 async def delete_user(message: types.Message):
-    try:
-        if message.reply_to_message is not None:
-            present = await is_present(message.reply_to_message.from_user.id)
-            if present:
-                user_id = message.reply_to_message.from_user.id
-                quit = await is_quit(user_id)
-                if not quit:
-                    num = await get_number(user_id)
-                    await update_queue(num)
-                    await remove_user(user_id)
-                    user_name = (message.reply_to_message.from_user.username if message.reply_to_message.from_user.username
-                                                                       is not None else message.from_user.full_name)
-                    text = f"@{user_name} has been successfully removed from the queue.\n"
-                    first_name = await get_user(1)
-                    if first_name is not None:
-                        text += f"@{first_name} is next!"
-                        second_name = await get_user(2)
-                        if second_name is not None:
-                            text += f"\n@{second_name} is after @{first_name}"
+    if str(message.from_user.id) in ADMINS:
+        try:
+            if message.reply_to_message is not None:
+                present = await is_present(message.reply_to_message.from_user.id)
+                if present:
+                    user_id = message.reply_to_message.from_user.id
+                    quit = await is_quit(user_id)
+                    if not quit:
+                        num = await get_number(user_id)
+                        await update_queue(num)
+                        await remove_user(user_id)
+                        user_name = (message.reply_to_message.from_user.username if message.reply_to_message.from_user.username
+                                                                           is not None else message.from_user.full_name)
+                        text = f"@{user_name} has been successfully removed from the queue.\n"
+                        first_name = await get_user(1)
+                        if first_name is not None:
+                            text += f"@{first_name} is next!"
+                            second_name = await get_user(2)
+                            if second_name is not None:
+                                text += f"\n@{second_name} is after @{first_name}"
+                            else:
+                                text += "There is nobody else in the queue."
                         else:
-                            text += "There is nobody else in the queue."
+                            text += "This is the end of the queue."
+                        msg = await message.reply_to_message.reply(text)
+                        try:
+                            await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+                        except MessageCantBeDeleted:
+                            logger.error('Message with /remove_user command cannot be deleted.')
                     else:
-                        text += "This is the end of the queue."
-                    msg = await message.reply_to_message.reply(text)
+                        await save_msg(message)
+                        msg = await message.reply_to_message.reply("This user has already been removed from the queue.")
+                else:
+                    msg = await message.reply_to_message.reply("The user is not in the queue.")
                     try:
                         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-                    except MessageCantBeDeleted:
-                        logger.error('Message with /remove_user command cannot be deleted.')
-                else:
-                    await save_msg(message)
-                    msg = await message.reply_to_message.reply("This user has already been removed from the queue.")
+                    except Exception as ex:
+                        logger.exception(ex)
             else:
-                msg = await message.reply_to_message.reply("The user is not in the queue.")
-                try:
-                    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-                except Exception as ex:
-                    logger.exception(ex)
-        else:
-            await save_msg(message)
-            msg = await message.reply("This command must be sent as a reply.")
-        await save_msg(msg)
-    except Exception:
-        logger.exception("An unexpected error occurred.")
-        msg = await message.reply("An unexpected error occurred.")
+                await save_msg(message)
+                msg = await message.reply("This command must be sent as a reply.")
+            await save_msg(msg)
+        except Exception:
+            logger.exception("An unexpected error occurred.")
+            msg = await message.reply("An unexpected error occurred.")
+            await save_msg(msg)
+    else:
+        msg = await message.reply("You do no have rights to use this command.")
+        await save_msg(message)
         await save_msg(msg)
 
 
@@ -239,54 +247,63 @@ async def change_lab(message: types.Message):
         await save_msg(msg)
 
 
-@dp.message_handler(lambda message: str(message.from_user.id) in ADMINS, commands=['next'])
+@dp.message_handler(commands=['next'])
 async def remove_first(message: types.Message):
-    try:
-        empty = await is_empty()
-        if not empty:
-            user_name = await get_user(1)
-            text = f'@{user_name} has been successfully removed from the queue.\n'
-            await remove_user(num=1)
-            await update_queue(num=1)
-            first_name = await get_user(1)
-            if first_name is not None:
-                text += f"@{first_name} is next!"
-                second_name = await get_user(2)
-                if second_name is not None:
-                    text += f"\n@{second_name} is after @{first_name}"
+    if str(message.from_user.id) in ADMINS:
+        try:
+            empty = await is_empty()
+            if not empty:
+                user_name = await get_user(1)
+                text = f'@{user_name} has been successfully removed from the queue.\n'
+                await remove_user(num=1)
+                await update_queue(num=1)
+                first_name = await get_user(1)
+                if first_name is not None:
+                    text += f"@{first_name} is next!"
+                    second_name = await get_user(2)
+                    if second_name is not None:
+                        text += f"\n@{second_name} is after @{first_name}"
+                    else:
+                        text += " There is nobody else in the queue."
                 else:
-                    text += " There is nobody else in the queue."
-            else:
-                text += "This is the end of the queue."
-            msg = await message.answer(text)
-            try:
-                await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-            except MessageCantBeDeleted:
-                logger.error(f'Message with command /next cannot be deleted.')
-        else:
-            msg = await message.reply('The queue is empty.')
-            await save_msg(message)
-        await save_msg(msg)
-    except Exception:
-        logger.exception('An unexpected error occurred')
-        msg = await message.reply('An unexpected error occurred')
-        await save_msg(msg)
-
-
-@dp.message_handler(lambda message: str(message.from_user.id) in ADMINS or message.from_user.id == message.chat.id,
-                    commands=['clear'])
-async def clear_messages(message: types.Message):
-    try:
-        await save_msg(message)
-        id_list = await get_messages(message.chat.id)
-        if id_list:
-            for msg_id in id_list:
+                    text += "This is the end of the queue."
+                msg = await message.answer(text)
                 try:
-                    await bot.delete_message(message_id=msg_id, chat_id=message.chat.id)
-                except Exception:
-                    logger.exception(f'Message cannot be deleted.')
-    except Exception:
-        logger.exception(f'An unexpected error occurred.')
+                    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+                except MessageCantBeDeleted:
+                    logger.error(f'Message with command /next cannot be deleted.')
+            else:
+                msg = await message.reply('The queue is empty.')
+                await save_msg(message)
+            await save_msg(msg)
+        except Exception:
+            logger.exception('An unexpected error occurred')
+            msg = await message.reply('An unexpected error occurred')
+            await save_msg(msg)
+    else:
+        msg = await message.reply("You do not have rights to use this command.")
+        await save_msg(message)
+        await save_msg(msg)
+
+
+@dp.message_handler(commands=['clear'])
+async def clear_messages(message: types.Message):
+    if str(message.from_user.id) in ADMINS or message.from_user.id == message.chat.id:
+        try:
+            await save_msg(message)
+            id_list = await get_messages(message.chat.id)
+            if id_list:
+                for msg_id in id_list:
+                    try:
+                        await bot.delete_message(message_id=msg_id, chat_id=message.chat.id)
+                    except Exception:
+                        logger.exception(f'Message cannot be deleted.')
+        except Exception:
+            logger.exception(f'An unexpected error occurred.')
+    else:
+        msg = await message.reply("You do not have rights to use this command.")
+        await save_msg(message)
+        await save_msg(msg)
 
 
 @dp.callback_query_handler(options_callback.filter(action="add"))
