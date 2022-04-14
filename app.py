@@ -6,6 +6,7 @@ import handlers
 from utils.notify import on_startup_notify
 from utils.set_bot_commands import set_default_commands
 from utils.misc.logging import file_error_handler
+from utils.db_api.queue_db import set_queue_id, is_deleted
 import asyncio
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,9 @@ logger.addHandler(file_error_handler)
 
 async def on_startup(dispatcher):
     try:
+        is_queue_deleted = await is_deleted()
+        if is_queue_deleted:
+            await set_queue_id()
         await set_default_commands(dispatcher)
     except Exception:
         logger.exception('An unexpected error occured')

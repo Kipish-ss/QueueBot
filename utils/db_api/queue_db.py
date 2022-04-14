@@ -209,5 +209,37 @@ async def is_empty() -> bool:
     return True
 
 
+async def set_queue_id() -> None:
+    async with aiosqlite.connect(DB) as conn:
+        query = 'INSERT INTO stats(queue_id) ' \
+                'SELECT CASE ' \
+                'WHEN MAX(queue_id) IS NULL THEN 1 ' \
+                'ELSE  MAX(queue_id)+1 ' \
+                'END FROM stats'
+        await conn.execute(query)
+        await conn.commit()
+
+
+async def is_deleted() -> bool:
+    async with aiosqlite.connect(DB) as conn:
+        query = 'SELECT is_deleted FROM stats WHERE queue_id = (SELECT MAX(queue_id) FROM stats)'
+        async with conn.execute(query) as cursor:
+            is_deleted_tpl = await cursor.fetchone()
+    if is_deleted_tpl is not None:
+        deleted = is_deleted_tpl[0] == 1
+    else:
+        deleted = True
+    return deleted
+
+
+async def set_queue_info(quit_num: int, curr_date: str) -> None:
+    query = 'UPDATE stats SET quit_num = ?, date_deleted = ?, is_deleted = 1 ' \
+            'WHERE queue_id = (SELECT MAX(queue_id) FROM stats)'
+    async with aiosqlite.connect(DB) as conn:
+        await conn.execute(query, (quit_num, curr_date))
+        await conn.commit()
+
+
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
+    loop.run_until_complete(is_deleted())

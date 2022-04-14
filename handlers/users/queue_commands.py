@@ -2,7 +2,7 @@ from loader import dp
 from aiogram import types
 from utils.db_api.queue_db import add_user, find_max, is_present, get_number, update_queue, \
     remove_user, reset_queue, show_count, is_quit, update_num, get_user, get_priority, \
-    display_queue, reset_quit, is_empty, save_msg_id, get_messages
+    display_queue, reset_quit, is_empty, save_msg_id, get_messages, set_queue_info, set_queue_id
 from data.config import ADMINS
 from loader import bot
 from keyboards.inline.options import get_add_keyboard, get_lab_keyboard
@@ -10,6 +10,7 @@ from keyboards.inline.callbackdata import options_callback, lab_callback
 from aiogram.utils.exceptions import MessageCantBeDeleted
 import logging
 from utils.misc.logging import file_error_handler
+import datetime
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
@@ -26,7 +27,11 @@ async def save_msg(message: types.Message):
 @dp.message_handler(commands=["delete_queue"])
 async def delete_queue(message: types.Message):
     if str(message.from_user.id) in ADMINS:
+        quit_num = await show_count()
+        current_date = datetime.datetime.now().strftime("%d-%m-%Y %H:%M")
+        await set_queue_info(quit_num, current_date)
         await reset_queue()
+        await set_queue_id()
         msg = await message.reply("The queue was deleted.")
     else:
         msg = await message.reply("You do not have rights to use this command.")
