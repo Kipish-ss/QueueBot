@@ -2,7 +2,8 @@ from loader import dp
 from aiogram import types
 from utils.db_api.queue_db import add_user, find_max, is_present, get_number, update_queue, \
     remove_user, reset_queue, show_count, is_quit, update_num, get_user, get_priority, \
-    display_queue, reset_quit, is_empty, save_msg_id, get_messages, set_queue_info, set_queue_id, delete_queue_info
+    display_queue, reset_quit, is_empty, save_msg_id, get_messages, set_queue_info, set_queue_id, delete_queue_info, \
+    get_avg_quit_num
 from data.config import ADMINS
 from loader import bot
 from keyboards.inline.options import get_add_keyboard, get_lab_keyboard, get_save_queue_keyboard
@@ -305,6 +306,14 @@ async def clear_messages(message: types.Message):
         msg = await message.reply("You do not have rights to use this command.")
         await save_msg(message)
         await save_msg(msg)
+
+
+@dp.message_handler(commands=['average_quit_num'])
+async def average_quit_num(message: types.Message):
+    await save_msg(message)
+    avg_quit_num = await get_avg_quit_num()
+    msg = await message.reply(f'Average number of people who quit the queue is {round(avg_quit_num)}.')
+    await save_msg(msg)
 
 
 @dp.callback_query_handler(options_callback.filter(action="add"))

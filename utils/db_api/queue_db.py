@@ -247,6 +247,18 @@ async def delete_queue_info() -> None:
         await conn.commit()
 
 
+async def get_avg_quit_num() -> int:
+    async with aiosqlite.connect(DB) as conn:
+        query = "SELECT AVG(quit_num) FROM stats"
+        async with conn.execute(query) as cursor:
+            avg_quit_num_tpl = await cursor.fetchone()
+    if avg_quit_num_tpl is not None:
+        avg_quit_num = avg_quit_num_tpl[0]
+    else:
+        avg_quit_num = 0
+    return avg_quit_num
+
+
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(is_deleted())
