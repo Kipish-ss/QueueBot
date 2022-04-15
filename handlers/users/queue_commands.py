@@ -2,11 +2,11 @@ from loader import dp
 from aiogram import types
 from utils.db_api.queue_db import add_user, find_max, is_present, get_number, update_queue, \
     remove_user, reset_queue, show_count, is_quit, update_num, get_user, get_priority, \
-    display_queue, reset_quit, is_empty, save_msg_id, get_messages, set_queue_info, set_queue_id
+    display_queue, reset_quit, is_empty, save_msg_id, get_messages, set_queue_info, set_queue_id, delete_queue_info
 from data.config import ADMINS
 from loader import bot
-from keyboards.inline.options import get_add_keyboard, get_lab_keyboard
-from keyboards.inline.callbackdata import options_callback, lab_callback
+from keyboards.inline.options import get_add_keyboard, get_lab_keyboard, get_save_queue_keyboard
+from keyboards.inline.callbackdata import options_callback, lab_callback, save_queue_callback
 from aiogram.utils.exceptions import MessageCantBeDeleted
 import logging
 from utils.misc.logging import file_error_handler
@@ -27,16 +27,12 @@ async def save_msg(message: types.Message):
 @dp.message_handler(commands=["delete_queue"])
 async def delete_queue(message: types.Message):
     if str(message.from_user.id) in ADMINS:
-        quit_num = await show_count()
-        current_date = datetime.datetime.now().strftime("%d-%m-%Y %H:%M")
-        await set_queue_info(quit_num, current_date)
-        await reset_queue()
-        await set_queue_id()
-        msg = await message.reply("The queue was deleted.")
+        await message.reply(text="Do you want to save the info about this queue?", reply_markup=get_save_queue_keyboard(
+            message.from_user.id))
     else:
         msg = await message.reply("You do not have rights to use this command.")
+        await save_msg(msg)
     await save_msg(message)
-    await save_msg(msg)
 
 
 @dp.message_handler(commands=["join_queue"])
@@ -364,4 +360,29 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
             await bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
             await bot.delete_message(message_id=message_id, chat_id=chat_id)
         except MessageCantBeDeleted:
-            logger.error(f'Message with command /join_queue cannot be deleted.')
+            logger.error('Message with command /join_queue cannot be deleted.')
+
+
+@dp.callback_query_handler(save_queue_callback.filter())
+async def delete_queue(call: types.CallbackQuery, callback_data: dict):
+    user_id = int(callback_data.get("user_id"))
+    if call.from_user.id == user_id:
+        option = callback_data.get("option")
+        if option == "yes":
+            quit_num = await show_count()
+            current_date = datetime.datetime.now().strftime("%d-%m-%Y %H:%M")
+            await set_queue_info(quit_num, current_date)
+            text = "The info about the queue was saved.\n"
+        else:
+            await delete_queue_info()
+            text = "The info about the queue was not saved.\n"
+        await reset_queue()
+        await set_queue_id()
+        chat_id = call.message.chat.id
+        try:
+            await bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
+        except MessageCantBeDeleted:
+            logger.error('Inline keyboard cannot be deleted.')
+        text += "The queue was deleted."
+        msg = await call.message.reply_to_message.reply(text)
+        await save_msg(msg)

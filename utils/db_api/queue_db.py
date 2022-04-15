@@ -240,6 +240,13 @@ async def set_queue_info(quit_num: int, curr_date: str) -> None:
         await conn.commit()
 
 
+async def delete_queue_info() -> None:
+    async with aiosqlite.connect(DB) as conn:
+        query = "DELETE FROM stats WHERE queue_id = (SELECT MAX(queue_id) FROM stats)"
+        await conn.execute(query)
+        await conn.commit()
+
+
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(is_deleted())

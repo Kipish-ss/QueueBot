@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from .callbackdata import options_callback, lab_callback
+from .callbackdata import options_callback, lab_callback, save_queue_callback
 from data.config import MIN_PRIORITY, MAX_PRIORITY
 
 
@@ -22,3 +22,13 @@ def get_lab_keyboard(user_id: int, user_name: str, message_id: int, present: boo
                                                                               user_name=user_name,
                                                                               message_id=message_id, present=present)))
     return lab_choice
+
+
+def get_save_queue_keyboard(user_id: int):
+    yes_no_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Yes", callback_data=save_queue_callback.new(option="yes", user_id=user_id)),
+            InlineKeyboardButton(text="No", callback_data=save_queue_callback.new(option="no", user_id=user_id))
+        ]
+    ])
+    return yes_no_keyboard
