@@ -12,7 +12,7 @@ async def save_msg_id(message_id: int, chat_id: int) -> None:
         await conn.commit()
 
 
-async def get_messages(chat_id: int):
+async def get_messages(chat_id: int) -> list[int]:
     async with aiosqlite.connect(DB) as conn:
         query = "SELECT ID FROM messages WHERE chat_id = ? ORDER BY ID ASC"
         async with conn.execute(query, (chat_id,)) as cursor:
@@ -249,7 +249,7 @@ async def delete_queue_info() -> None:
 
 async def get_avg_quit_num() -> int:
     async with aiosqlite.connect(DB) as conn:
-        query = "SELECT AVG(quit_num) FROM stats"
+        query = "SELECT AVG(quit_num) FROM stats WHERE is_deleted = 1"
         async with conn.execute(query) as cursor:
             avg_quit_num_tpl = await cursor.fetchone()
     if avg_quit_num_tpl is not None:

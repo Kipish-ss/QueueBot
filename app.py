@@ -33,7 +33,7 @@ async def on_shutdown(dispatcher):
 if __name__ == '__main__':
     try:
         asyncio.get_event_loop().run_until_complete(on_startup_notify(dp))
-        executor.start_polling(dispatcher=dp, on_startup=on_startup, on_shutdown=on_shutdown, skip_updates=True)
+        executor.start_polling(dispatcher=dp, on_startup=on_startup, on_shutdown=on_shutdown, skip_updates=True, timeout=0.1)
     except TimeoutError as ex:
         logger.exception(ex)
     except Exception:
