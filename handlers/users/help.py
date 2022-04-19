@@ -1,13 +1,9 @@
 from aiogram import types
 from aiogram.dispatcher.filters.builtin import CommandHelp
 from loader import dp
-from utils.misc.logging import file_error_handler
+from utils.misc.logging import logger
 import logging
 from .queue_commands import save_msg
-
-logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
-logger.addHandler(file_error_handler)
 
 
 @dp.message_handler(CommandHelp())

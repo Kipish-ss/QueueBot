@@ -5,13 +5,9 @@ from loader import dp
 import handlers
 from utils.notify import on_startup_notify
 from utils.set_bot_commands import set_default_commands
-from utils.misc.logging import file_error_handler
+from utils.misc.logging import logger
 from utils.db_api.queue_db import set_queue_id, is_deleted
 import asyncio
-
-logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
-logger.addHandler(file_error_handler)
 
 
 async def on_startup(dispatcher):

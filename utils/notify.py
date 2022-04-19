@@ -1,15 +1,10 @@
 from data.config import CHAT, ADMINS, TEST_CHAT
 from aiogram import Dispatcher
 import time
-from utils.misc.logging import file_info_handler, file_error_handler
+from utils.misc.logging import logger
 import logging
 from aiogram.utils.exceptions import BadRequest
 from handlers.users.queue_commands import save_msg
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger.addHandler(file_info_handler)
-logger.addHandler(file_error_handler)
 
 
 async def on_startup_notify(dp: Dispatcher):
@@ -24,7 +19,7 @@ async def on_startup_notify(dp: Dispatcher):
             logger.exception(ex)
         msg = await dp.bot.send_message(chat_id=CHAT, text='Wait a minute before bot can handle your commands!')
         await save_msg(msg)
-        for i in range(60, 0, -1):
+        for i in range(0, 0, -1):
             if i != 60 and i % 15 == 0:
                 msg = await dp.bot.send_message(chat_id=CHAT, text=f'{i} seconds left before the start of the queue!')
                 await save_msg(msg)
