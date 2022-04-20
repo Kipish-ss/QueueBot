@@ -9,8 +9,10 @@ from loader import bot
 from keyboards.inline.options import get_add_keyboard, get_lab_keyboard, get_save_queue_keyboard
 from keyboards.inline.callbackdata import options_callback, lab_callback, save_queue_callback
 from aiogram.utils.exceptions import MessageCantBeDeleted
-from utils.misc.logging import logger
+from utils.misc.logging import get_logger
 import datetime
+
+logger = get_logger()
 
 
 async def save_msg(message: types.Message):

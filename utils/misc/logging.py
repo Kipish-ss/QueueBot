@@ -31,5 +31,3 @@ def get_logger(handle_info=True, handle_errors=True):
                         level=logging.INFO)
     return logger
 
-
-logger = get_logger()

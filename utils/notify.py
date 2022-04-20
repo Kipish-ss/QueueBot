@@ -1,10 +1,12 @@
 from data.config import CHAT, ADMINS, TEST_CHAT
 from aiogram import Dispatcher
 import time
-from utils.misc.logging import logger
+from utils.misc.logging import get_logger
 import logging
 from aiogram.utils.exceptions import BadRequest
 from handlers.users.queue_commands import save_msg
+
+logger = get_logger()
 
 
 async def on_startup_notify(dp: Dispatcher):
