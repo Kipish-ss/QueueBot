@@ -1,5 +1,4 @@
 from data.config import CHAT, TEST_CHAT
-import logging
 from aiogram import executor
 from loader import dp
 import handlers
