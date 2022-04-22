@@ -1,8 +1,10 @@
+from __future__ import annotations
 import aiosqlite
 from data.config import DB
 import asyncio
 from data.config import MIN_PRIORITY
 import sqlite3
+from typing import List, Dict
 
 
 async def save_msg_id(message_id: int, chat_id: int) -> None:
@@ -12,7 +14,7 @@ async def save_msg_id(message_id: int, chat_id: int) -> None:
         await conn.commit()
 
 
-async def get_messages(chat_id: int) -> list[int]:
+async def get_messages(chat_id: int) -> List[int] | None:
     async with aiosqlite.connect(DB) as conn:
         query = "SELECT ID FROM messages WHERE chat_id = ? ORDER BY ID ASC"
         async with conn.execute(query, (chat_id,)) as cursor:
@@ -155,7 +157,7 @@ async def reset_quit(user_id: int) -> None:
         await conn.commit()
 
 
-async def get_user(num: int = 0, user_id: int = 0) -> str:
+async def get_user(num: int = 0, user_id: int = 0) -> str | None:
     async with aiosqlite.connect(DB) as conn:
         if num != 0:
             query = "SELECT user_name FROM queue WHERE number = ?"
@@ -183,7 +185,7 @@ async def get_priority(user_id: int) -> int:
     return priority
 
 
-async def display_queue():
+async def display_queue() -> Dict[str, (int, int)] | None:
     async with aiosqlite.connect(DB) as conn:
         query = "SELECT user_name, number, priority FROM queue WHERE number is not NULL ORDER BY number ASC"
         cursor: aiosqlite.Cursor
