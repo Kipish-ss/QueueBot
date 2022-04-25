@@ -8,7 +8,7 @@ from keyboards.inline.options import get_save_queue_keyboard
 from keyboards.inline.callbackdata import save_queue_callback
 from aiogram.utils.exceptions import MessageCantBeDeleted
 from utils.misc.logging import get_logger
-from .queue_commands import save_msg
+from message_saver import save_msg
 import datetime
 
 logger = get_logger()

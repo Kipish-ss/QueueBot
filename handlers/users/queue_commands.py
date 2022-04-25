@@ -2,7 +2,8 @@ from loader import dp
 from aiogram import types
 from utils.db_api.queue_db import add_user, find_max, is_present, get_number, update_queue, \
     remove_user, show_count, is_quit, update_num, get_user, get_priority, \
-    display_queue, reset_quit, save_msg_id, get_avg_quit_num
+    display_queue, reset_quit, get_avg_quit_num
+from message_saver import save_msg
 from data.config import ADMINS
 from loader import bot
 from keyboards.inline.options import get_add_keyboard, get_lab_keyboard
@@ -11,13 +12,6 @@ from aiogram.utils.exceptions import MessageCantBeDeleted
 from utils.misc.logging import get_logger
 
 logger = get_logger()
-
-
-async def save_msg(message: types.Message):
-    try:
-        await save_msg_id(message.message_id, message.chat.id)
-    except Exception as ex:
-        logger.exception(ex)
 
 
 @dp.message_handler(commands=["join_queue"])
