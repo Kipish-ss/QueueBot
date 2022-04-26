@@ -31,6 +31,9 @@ async def delete_user(message: types.Message):
         try:
             if message.reply_to_message is not None:
                 present = await is_present(message.reply_to_message.from_user.id)
+                user_name = (message.reply_to_message.from_user.username
+                             if message.reply_to_message.from_user.username is not None
+                             else message.from_user.full_name)
                 if present:
                     user_id = message.reply_to_message.from_user.id
                     quit = await is_quit(user_id)
@@ -38,9 +41,6 @@ async def delete_user(message: types.Message):
                         num = await get_number(user_id)
                         await update_queue(num)
                         await remove_user(user_id)
-                        user_name = (message.reply_to_message.from_user.username
-                                     if message.reply_to_message.from_user.username
-                                     is not None else message.from_user.full_name)
                         text = f"@{user_name} has been successfully removed from the queue.\n"
                         first_name = await get_user(1)
                         if first_name is not None:
@@ -52,16 +52,16 @@ async def delete_user(message: types.Message):
                                 text += "There is nobody else in the queue."
                         else:
                             text += "This is the end of the queue."
-                        msg = await message.reply_to_message.reply(text)
-                        try:
-                            await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-                        except MessageCantBeDeleted:
-                            logger.error('Message with /remove_user command cannot be deleted.')
+                        msg = await message.answer(text)
                     else:
-                        await save_msg(message)
-                        msg = await message.reply_to_message.reply("This user has already been removed from the queue.")
+                        msg = await message.reply(f"@{user_name} has already been "
+                                                                   f"removed from the queue.")
+                    try:
+                        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
+                    except MessageCantBeDeleted:
+                        logger.exception('Message with /remove_user command cannot be deleted.')
                 else:
-                    msg = await message.reply_to_message.reply("The user is not in the queue.")
+                    msg = await message.reply(f"@{user_name} is not in the queue.")
                     try:
                         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
                     except Exception as ex:
