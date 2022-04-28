@@ -6,8 +6,8 @@ from utils.db_api.queue_db import add_user, find_max, is_present, get_number, up
 from message_saver import save_msg
 from data.config import ADMINS
 from loader import bot
-from keyboards.inline.options import get_add_keyboard, get_lab_keyboard
-from keyboards.inline.callbackdata import options_callback, lab_callback
+from keyboards.inline.get_inline_keyboards import get_add_keyboard, get_lab_keyboard, get_stats_keyboard
+from keyboards.inline.callbackdata import options_callback, lab_callback, stats_callback
 from aiogram.utils.exceptions import MessageCantBeDeleted
 from utils.misc.logging import get_logger
 
@@ -41,12 +41,14 @@ async def add_to_queue(message: types.Message):
                              else message.from_user.full_name)
                 await bot.send_message(int(ADMINS[0]), text=f"Add {user_name}?", reply_markup=get_add_keyboard(
                     message.from_user.id, user_name, message.chat.id, priority=priority))
-                msg = await message.reply("You have quit the queue. Wait for @kirish_ss to add you or wait for a new queue.")
+                msg = await message.reply("You have quit the queue. Wait for @kirish_ss to add you or wait for a new "
+                                          "queue.")
                 await save_msg(msg)
             else:
                 num = await get_number(message.from_user.id)
-                msg = await message.reply(f'You are already in the queue. Your number is {num}, your lab is {priority}.\nUse '
-                                    f'/quit_queue command when you finish your lab.')
+                msg = await message.reply(
+                    f'You are already in the queue. Your number is {num}, your lab is {priority}.\nUse '
+                    f'/quit_queue command when you finish your lab.')
                 await save_msg(msg)
             await save_msg(message)
     except Exception as ex:
@@ -63,7 +65,7 @@ async def show_number(message: types.Message):
             if not quit:
                 num = await get_number(message.from_user.id)
                 msg = await message.reply(f'Your current number in queue is {num}.\nUse /quit_queue command when you '
-                                    f'finish your lab.')
+                                          f'finish your lab.')
             else:
                 msg = await message.reply("You have quit the queue. Use /join_queue command.")
         else:
@@ -99,7 +101,8 @@ async def leave_queue(message: types.Message):
                     text += "This is the end of the queue."
                 msg = await message.reply(text)
             else:
-                msg = await message.reply("You have already quit the queue.\nIf you want to rejoin, use /join_queue command.")
+                msg = await message.reply(
+                    "You have already quit the queue.\nIf you want to rejoin, use /join_queue command.")
         else:
             msg = await message.reply("You are not in the queue.")
         await save_msg(msg)
@@ -173,12 +176,16 @@ async def change_lab(message: types.Message):
         await save_msg(msg)
 
 
-@dp.message_handler(commands=['average_quit_num'])
-async def average_quit_num(message: types.Message):
-    await save_msg(message)
-    avg_quit_num = await get_avg_quit_num()
-    msg = await message.reply(f'Average number of people who quit the queue is {round(avg_quit_num)}.')
-    await save_msg(msg)
+@dp.message_handler(commands=['stats'])
+async def show_stats(message: types.Message):
+    try:
+        await bot.delete_message(message_id=message.message_id, chat_id=message.chat.id)
+    except MessageCantBeDeleted:
+        logger.exception("Message with /stats command cannot be deleted")
+    try:
+        await message.answer(text="Choose the option you need:", reply_markup=get_stats_keyboard())
+    except Exception:
+        logger.exception("An error occurred when trying to show stats keyboard")
 
 
 @dp.callback_query_handler(options_callback.filter(action="add"))
@@ -226,7 +233,7 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
                 await update_num(user_id=user_id, num=num, priority=priority, change=True)
             else:
                 num = num_previous
-        text = f"You are {num} in the queue with lab {priority}.\nUse /quit_queue command " \
+        text = f"Yu are {num} in the queue with lab {priority}.\nUse /quit_queue command " \
                f"when you finish your lab.\nUse /change_lab command to change your lab number."
         await bot.answer_callback_query(call.id, text=text, show_alert=True)
         try:
@@ -234,4 +241,17 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
             await bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
             await bot.delete_message(message_id=message_id, chat_id=chat_id)
         except MessageCantBeDeleted:
-            logger.error('Message with command /join_queue cannot be deleted.')
+            logger.exception('Message with command /join_queue cannot be deleted.')
+
+
+@dp.callback_query_handler(stats_callback.filter())
+async def avg_quit_num(call: types.CallbackQuery, callback_data: dict):
+    option = callback_data.get("option")
+    if option == "avg_quit_num":
+        avg_quit = await get_avg_quit_num()
+        await call.answer(text=f'{round(avg_quit)} people on average left the queue', show_alert=True)
+    else:
+        try:
+            await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+        except MessageCantBeDeleted:
+            logger.exception('Message with stats_keyboard cannot be deleted.')

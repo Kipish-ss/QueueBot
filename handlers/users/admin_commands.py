@@ -4,7 +4,7 @@ from utils.db_api.queue_db import is_present, get_number, update_queue, remove_u
     is_quit, get_user, is_empty, get_messages, set_queue_info, set_queue_id, delete_queue_info
 from data.config import ADMINS
 from loader import bot
-from keyboards.inline.options import get_save_queue_keyboard
+from keyboards.inline.get_inline_keyboards import get_save_queue_keyboard
 from keyboards.inline.callbackdata import save_queue_callback
 from aiogram.utils.exceptions import MessageCantBeDeleted
 from utils.misc.logging import get_logger
@@ -55,7 +55,7 @@ async def delete_user(message: types.Message):
                         msg = await message.answer(text)
                     else:
                         msg = await message.reply(f"@{user_name} has already been "
-                                                                   f"removed from the queue.")
+                                                  f"removed from the queue.")
                     try:
                         await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
                     except MessageCantBeDeleted:

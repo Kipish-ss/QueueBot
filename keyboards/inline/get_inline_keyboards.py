@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from .callbackdata import options_callback, lab_callback, save_queue_callback
+from .callbackdata import options_callback, lab_callback, save_queue_callback, stats_callback
 from data.config import MIN_PRIORITY, MAX_PRIORITY
 
 
@@ -32,3 +32,11 @@ def get_save_queue_keyboard(user_id: int):
         ]
     ])
     return yes_no_keyboard
+
+
+def get_stats_keyboard():
+    stats_keyboard = InlineKeyboardMarkup(row_width=1)
+    stats_keyboard.insert(InlineKeyboardButton(text="Average quit num", callback_data=stats_callback.new(
+        option="avg_quit_num")))
+    stats_keyboard.insert(InlineKeyboardButton(text="Close❌", callback_data=stats_callback.new(option="close")))
+    return stats_keyboard
