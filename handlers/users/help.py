@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.dispatcher.filters.builtin import CommandHelp
 from loader import dp
-from message_saver import save_msg
+from message_functions import save_msg
 
 
 @dp.message_handler(CommandHelp())

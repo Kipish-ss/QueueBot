@@ -3,12 +3,11 @@ from aiogram import types
 from utils.db_api.queue_db import add_user, find_max, is_present, get_number, update_queue, \
     remove_user, show_count, is_quit, update_num, get_user, get_priority, \
     display_queue, reset_quit, get_avg_quit_num
-from message_saver import save_msg
+from message_functions import save_msg, delete_message
 from data.config import ADMINS
 from loader import bot
 from keyboards.inline.get_inline_keyboards import get_add_keyboard, get_lab_keyboard, get_stats_keyboard
 from keyboards.inline.callbackdata import options_callback, lab_callback, stats_callback
-from aiogram.utils.exceptions import MessageCantBeDeleted
 from utils.misc.logging import get_logger
 
 logger = get_logger()
@@ -178,10 +177,7 @@ async def change_lab(message: types.Message):
 
 @dp.message_handler(commands=['stats'])
 async def show_stats(message: types.Message):
-    try:
-        await bot.delete_message(message_id=message.message_id, chat_id=message.chat.id)
-    except MessageCantBeDeleted:
-        logger.exception("Message with /stats command cannot be deleted")
+    await delete_message(message)
     try:
         await message.answer(text="Choose the option you need:", reply_markup=get_stats_keyboard())
     except Exception:
@@ -200,7 +196,7 @@ async def approve_user(call: types.CallbackQuery, callback_data: dict):
     await save_msg(msg)
     await reset_quit(user_id)
     await call.message.edit_reply_markup()
-    await bot.delete_message(message_id=call.message.message_id, chat_id=int(ADMINS[0]))
+    await delete_message(message_id=call.message.message_id, chat_id=int(ADMINS[0]))
 
 
 @dp.callback_query_handler(options_callback.filter(action="reject"))
@@ -236,12 +232,8 @@ async def set_priority(call: types.CallbackQuery, callback_data: dict):
         text = f"Yu are {num} in the queue with lab {priority}.\nUse /quit_queue command " \
                f"when you finish your lab.\nUse /change_lab command to change your lab number."
         await bot.answer_callback_query(call.id, text=text, show_alert=True)
-        try:
-            chat_id = call.message.chat.id
-            await bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
-            await bot.delete_message(message_id=message_id, chat_id=chat_id)
-        except MessageCantBeDeleted:
-            logger.exception('Message with command /join_queue cannot be deleted.')
+        await delete_message(call.message)
+        await delete_message(chat_id=call.message.chat.id, message_id=message_id)
 
 
 @dp.callback_query_handler(stats_callback.filter())
@@ -251,7 +243,4 @@ async def avg_quit_num(call: types.CallbackQuery, callback_data: dict):
         avg_quit = await get_avg_quit_num()
         await call.answer(text=f'{round(avg_quit)} people on average left the queue', show_alert=True)
     else:
-        try:
-            await bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
-        except MessageCantBeDeleted:
-            logger.exception('Message with stats_keyboard cannot be deleted.')
+        await delete_message(call.message)

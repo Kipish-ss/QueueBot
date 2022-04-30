@@ -3,7 +3,7 @@ from aiogram import Dispatcher
 import time
 from utils.misc.logging import get_logger
 from aiogram.utils.exceptions import BadRequest
-from message_saver import save_msg
+from message_functions import save_msg
 
 logger = get_logger()
 

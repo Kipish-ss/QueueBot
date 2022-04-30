@@ -2,7 +2,7 @@ from aiogram import types
 from aiogram.dispatcher.filters.builtin import CommandStart
 from loader import dp
 from utils.misc.logging import get_logger
-from message_saver import save_msg
+from message_functions import save_msg
 
 logger = get_logger()
 

@@ -3,12 +3,10 @@ from aiogram import types
 from utils.db_api.queue_db import is_present, get_number, update_queue, remove_user, reset_queue, show_count, \
     is_quit, get_user, is_empty, get_messages, set_queue_info, set_queue_id, delete_queue_info
 from data.config import ADMINS
-from loader import bot
-from keyboards.inline.get_inline_keyboards import get_save_queue_keyboard
-from keyboards.inline.callbackdata import save_queue_callback
-from aiogram.utils.exceptions import MessageCantBeDeleted
+from keyboards.inline.get_inline_keyboards import get_save_queue_keyboard, get_delete_queue_keyboard
+from keyboards.inline.callbackdata import save_queue_callback, delete_queue_callback
 from utils.misc.logging import get_logger
-from message_saver import save_msg
+from message_functions import save_msg, delete_message
 import datetime
 
 logger = get_logger()
@@ -17,12 +15,13 @@ logger = get_logger()
 @dp.message_handler(commands=["delete_queue"])
 async def delete_queue(message: types.Message):
     if str(message.from_user.id) in ADMINS:
-        await message.reply(text="Do you want to save the info about this queue?", reply_markup=get_save_queue_keyboard(
+        await delete_message(message)
+        await message.answer(text="Are you sure you want to delete the queue?", reply_markup=get_delete_queue_keyboard(
             message.from_user.id))
     else:
         msg = await message.reply("You do not have rights to use this command.")
         await save_msg(msg)
-    await save_msg(message)
+        await save_msg(message)
 
 
 @dp.message_handler(commands=['remove_user'])
@@ -56,16 +55,10 @@ async def delete_user(message: types.Message):
                     else:
                         msg = await message.reply(f"@{user_name} has already been "
                                                   f"removed from the queue.")
-                    try:
-                        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-                    except MessageCantBeDeleted:
-                        logger.exception('Message with /remove_user command cannot be deleted.')
+                    await delete_message(message)
                 else:
                     msg = await message.reply(f"@{user_name} is not in the queue.")
-                    try:
-                        await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-                    except Exception as ex:
-                        logger.exception(ex)
+                    await delete_message(message)
             else:
                 await save_msg(message)
                 msg = await message.reply("This command must be sent as a reply.")
@@ -101,10 +94,7 @@ async def remove_first(message: types.Message):
                 else:
                     text += "This is the end of the queue."
                 msg = await message.answer(text)
-                try:
-                    await bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
-                except MessageCantBeDeleted:
-                    logger.error(f'Message with command /next cannot be deleted.')
+                await delete_message(message)
             else:
                 msg = await message.reply('The queue is empty.')
                 await save_msg(message)
@@ -127,10 +117,7 @@ async def clear_messages(message: types.Message):
             id_list = await get_messages(message.chat.id)
             if id_list:
                 for msg_id in id_list:
-                    try:
-                        await bot.delete_message(message_id=msg_id, chat_id=message.chat.id)
-                    except Exception:
-                        logger.exception(f'Message cannot be deleted.')
+                    await delete_message(message_id=msg_id, chat_id=message.chat.id)
         except Exception:
             logger.exception(f'An unexpected error occurred.')
     else:
@@ -139,26 +126,45 @@ async def clear_messages(message: types.Message):
         await save_msg(msg)
 
 
+@dp.callback_query_handler(delete_queue_callback.filter())
+async def choose_delete_or_not(call: types.CallbackQuery, callback_data: dict):
+    option = callback_data.get("option")
+    user_id = int(callback_data.get("user_id"))
+    if call.from_user.id == user_id:
+        if option == "yes":
+            await call.message.edit_text("Do you want to save info about this queue?")
+            await call.message.edit_reply_markup(reply_markup=get_save_queue_keyboard(user_id))
+        else:
+            await delete_message(call.message)
+
+
+@dp.callback_query_handler(save_queue_callback.filter(option="back"))
+async def return_to_del_choice(call: types.CallbackQuery, callback_data: dict):
+    user_id = int(callback_data.get("user_id"))
+    if call.from_user.id == user_id:
+        try:
+            await call.message.edit_text("Are you sure you want to delete the queue?")
+            await call.message.edit_reply_markup(reply_markup=get_delete_queue_keyboard(user_id))
+        except Exception:
+            logger.exception("An unexpected error occurred")
+
+
 @dp.callback_query_handler(save_queue_callback.filter())
 async def delete_queue(call: types.CallbackQuery, callback_data: dict):
     user_id = int(callback_data.get("user_id"))
     if call.from_user.id == user_id:
+        text = ""
         option = callback_data.get("option")
         if option == "yes":
             quit_num = await show_count()
             current_date = datetime.datetime.now().strftime("%d-%m-%Y %H:%M")
             await set_queue_info(quit_num, current_date)
             text = "The info about the queue was saved.\n"
-        else:
+        elif option == "no":
             await delete_queue_info()
             text = "The info about the queue was not saved.\n"
         await reset_queue()
         await set_queue_id()
-        chat_id = call.message.chat.id
-        try:
-            await bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
-        except MessageCantBeDeleted:
-            logger.error('Inline keyboard cannot be deleted.')
+        await delete_message(call.message)
         text += "The queue was deleted."
-        msg = await call.message.reply_to_message.reply(text)
-        await save_msg(msg)
+        await call.answer(text, show_alert=True)

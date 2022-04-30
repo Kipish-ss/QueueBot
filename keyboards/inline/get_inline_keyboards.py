@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from .callbackdata import options_callback, lab_callback, save_queue_callback, stats_callback
+from .callbackdata import options_callback, lab_callback, save_queue_callback, stats_callback, delete_queue_callback
 from data.config import MIN_PRIORITY, MAX_PRIORITY
 
 
@@ -25,12 +25,14 @@ def get_lab_keyboard(user_id: int, user_name: str, message_id: int, present: boo
 
 
 def get_save_queue_keyboard(user_id: int):
-    yes_no_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Yes", callback_data=save_queue_callback.new(option="yes", user_id=user_id)),
-            InlineKeyboardButton(text="No", callback_data=save_queue_callback.new(option="no", user_id=user_id))
-        ]
-    ])
+    yes_no_keyboard = InlineKeyboardMarkup(row_width=2)
+    yes_no_keyboard.insert(InlineKeyboardButton(text="Yes", callback_data=save_queue_callback.new(option="yes",
+                                                                                                  user_id=user_id)))
+    yes_no_keyboard.insert(InlineKeyboardButton(text="No", callback_data=save_queue_callback.new(option="no",
+                                                                                                 user_id=user_id)))
+    yes_no_keyboard.insert(InlineKeyboardButton(text="Back👈", callback_data=save_queue_callback.new(option="back",
+                                                                                                    user_id=user_id)))
+
     return yes_no_keyboard
 
 
@@ -40,3 +42,12 @@ def get_stats_keyboard():
         option="avg_quit_num")))
     stats_keyboard.insert(InlineKeyboardButton(text="Close❌", callback_data=stats_callback.new(option="close")))
     return stats_keyboard
+
+
+def get_delete_queue_keyboard(user_id: int):
+    delete_keyboard = InlineKeyboardMarkup(row_width=2)
+    delete_keyboard.insert(InlineKeyboardButton(text="✅", callback_data=delete_queue_callback.new(option="yes",
+                                                                                                  user_id=user_id)))
+    delete_keyboard.insert(InlineKeyboardButton(text="❌", callback_data=delete_queue_callback.new(option="no",
+                                                                                                  user_id=user_id)))
+    return delete_keyboard
