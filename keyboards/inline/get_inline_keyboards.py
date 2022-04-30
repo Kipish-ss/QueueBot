@@ -4,13 +4,11 @@ from data.config import MIN_PRIORITY, MAX_PRIORITY
 
 
 def get_add_keyboard(user_id: int, user_name: str, chat_id: int, priority: int):
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Approve", callback_data=options_callback.new(
-                action="add", user_id=user_id, user_name=user_name, chat_id=chat_id, priority=priority)),
-            InlineKeyboardButton(text="Reject", callback_data=options_callback.new(
-                action="reject", user_id=user_id, user_name=user_name, chat_id=chat_id, priority=priority))
-        ]])
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.insert(InlineKeyboardButton(text="Approve", callback_data=options_callback.new(
+                action="add", user_id=user_id, user_name=user_name, chat_id=chat_id, priority=priority)))
+    keyboard.insert(InlineKeyboardButton(text="Reject", callback_data=options_callback.new(
+                action="reject", user_id=user_id, user_name=user_name, chat_id=chat_id, priority=priority)))
     return keyboard
 
 
