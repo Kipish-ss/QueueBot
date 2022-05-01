@@ -1,4 +1,4 @@
-from loader import dp
+from loader import dp, bot
 from aiogram import types
 from utils.db_api.queue_db import is_present, get_number, update_queue, remove_user, reset_queue, show_count, \
     is_quit, get_user, is_empty, get_messages, set_queue_info, set_queue_id, delete_queue_info
@@ -153,18 +153,22 @@ async def return_to_del_choice(call: types.CallbackQuery, callback_data: dict):
 async def delete_queue(call: types.CallbackQuery, callback_data: dict):
     user_id = int(callback_data.get("user_id"))
     if call.from_user.id == user_id:
-        text = ""
-        option = callback_data.get("option")
-        if option == "yes":
-            quit_num = await show_count()
-            current_date = datetime.datetime.now().strftime("%d-%m-%Y %H:%M")
-            await set_queue_info(quit_num, current_date)
-            text = "The info about the queue was saved.\n"
-        elif option == "no":
-            await delete_queue_info()
-            text = "The info about the queue was not saved.\n"
-        await reset_queue()
-        await set_queue_id()
-        await delete_message(call.message)
-        text += "The queue was deleted."
-        await call.answer(text, show_alert=True)
+        try:
+            text = ""
+            option = callback_data.get("option")
+            if option == "yes":
+                quit_num = await show_count()
+                current_date = datetime.datetime.now().strftime("%d-%m-%Y %H:%M")
+                await set_queue_info(quit_num, current_date)
+                text = "The info about the queue was saved.\n"
+            elif option == "no":
+                await delete_queue_info()
+                text = "The info about the queue was not saved.\n"
+            await reset_queue()
+            await set_queue_id()
+            await delete_message(call.message)
+            text += "The queue was deleted."
+            await call.answer(text, show_alert=True)
+            await bot.send_message(chat_id=ADMINS[0], text=text)
+        except Exception:
+            logger.exception('An unexpected error occurred')

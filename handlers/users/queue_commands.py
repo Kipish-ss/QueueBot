@@ -27,7 +27,7 @@ async def add_to_queue(message: types.Message):
                     user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
                     present=present))
             except ValueError:
-                logger.error('Resulted callback data is too long!\nPerhaps username is too long.')
+                logger.error('Resulted callback data is too long!\nPerhaps the username is too long.')
                 user_name = message.from_user.first_name
                 await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
                     user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
@@ -206,7 +206,7 @@ async def reject_user(call: types.CallbackQuery, callback_data: dict):
     await call.message.reply(f'@{user_name} has not been added to the queue.')
     msg = await bot.send_message(chat_id, text=f'@{user_name} has not been added to the queue.')
     await save_msg(msg)
-    await call.message.edit_reply_markup()
+    await delete_message(call.message)
 
 
 @dp.callback_query_handler(lab_callback.filter())
