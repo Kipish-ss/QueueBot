@@ -18,7 +18,7 @@ async def on_startup(dispatcher):
             await set_queue_id()
         await set_default_commands(dispatcher)
     except Exception:
-        logger.exception('An unexpected error occured')
+        logger.exception('An unexpected error occurred')
 
 
 async def on_shutdown(dispatcher):
@@ -38,4 +38,4 @@ if __name__ == '__main__':
     except TimeoutError as ex:
         logger.exception(ex)
     except Exception:
-        logger.exception('An unexpected error occured')
+        logger.exception('An unexpected error occurred')
