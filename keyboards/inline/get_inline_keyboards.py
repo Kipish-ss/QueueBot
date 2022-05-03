@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from .callbackdata import options_callback, lab_callback, save_queue_callback, stats_callback, delete_queue_callback
+from .callbackdata import options_callback, lab_callback, save_queue_callback, stats_callback, delete_queue_callback, \
+    reset_stats_callback
 from data.config import MIN_PRIORITY, MAX_PRIORITY
 
 
@@ -34,11 +35,14 @@ def get_save_queue_keyboard(user_id: int):
     return yes_no_keyboard
 
 
-def get_stats_keyboard():
-    stats_keyboard = InlineKeyboardMarkup(row_width=1)
+def get_stats_keyboard(user_id: int):
+    stats_keyboard = InlineKeyboardMarkup(row_width=2)
     stats_keyboard.insert(InlineKeyboardButton(text="Average quit num", callback_data=stats_callback.new(
-        option="avg_quit_num")))
-    stats_keyboard.insert(InlineKeyboardButton(text="Close❌", callback_data=stats_callback.new(option="close")))
+        option="avg_quit_num", user_id=user_id)))
+    stats_keyboard.insert(InlineKeyboardButton(text="Reset stats", callback_data=stats_callback.new(option="reset",
+                                                                                                    user_id=user_id)))
+    stats_keyboard.insert(InlineKeyboardButton(text="Close❌", callback_data=stats_callback.new(option="close",
+                                                                                               user_id=user_id)))
     return stats_keyboard
 
 
@@ -49,3 +53,14 @@ def get_delete_queue_keyboard(user_id: int):
     delete_keyboard.insert(InlineKeyboardButton(text="❌", callback_data=delete_queue_callback.new(option="no",
                                                                                                   user_id=user_id)))
     return delete_keyboard
+
+
+def get_reset_stats_keyboard(user_id: int):
+    reset_stats_keyboard = InlineKeyboardMarkup(row_width=2)
+    reset_stats_keyboard.insert(InlineKeyboardButton(text="Yes", callback_data=reset_stats_callback.new(option="yes",
+                                                                                                        user_id=user_id)))
+    reset_stats_keyboard.insert(InlineKeyboardButton(text="No", callback_data=reset_stats_callback.new(option="no",
+                                                                                                       user_id=user_id)))
+    reset_stats_keyboard.insert(InlineKeyboardButton(text="Back👈", callback_data=reset_stats_callback.new(
+        option="back", user_id=user_id)))
+    return reset_stats_keyboard

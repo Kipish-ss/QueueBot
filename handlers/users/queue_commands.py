@@ -2,12 +2,13 @@ from loader import dp
 from aiogram import types
 from utils.db_api.queue_db import add_user, find_max, is_present, get_number, update_queue, \
     remove_user, show_count, is_quit, update_num, get_user, get_priority, \
-    display_queue, reset_quit, get_avg_quit_num
+    display_queue, reset_quit, get_avg_quit_num, clear_stats, set_queue_id
 from message_functions import save_msg, delete_message
 from data.config import ADMINS
 from loader import bot
-from keyboards.inline.get_inline_keyboards import get_add_keyboard, get_lab_keyboard, get_stats_keyboard
-from keyboards.inline.callbackdata import options_callback, lab_callback, stats_callback
+from keyboards.inline.get_inline_keyboards import get_add_keyboard, get_lab_keyboard, get_stats_keyboard, \
+    get_reset_stats_keyboard
+from keyboards.inline.callbackdata import options_callback, lab_callback, stats_callback, reset_stats_callback
 from utils.misc.logging import get_logger
 
 logger = get_logger()
@@ -179,68 +180,114 @@ async def change_lab(message: types.Message):
 async def show_stats(message: types.Message):
     await delete_message(message)
     try:
-        await message.answer(text="Choose the option you need:", reply_markup=get_stats_keyboard())
+        await message.answer(text="Choose the option you need:", reply_markup=get_stats_keyboard(message.from_user.id))
     except Exception:
         logger.exception("An error occurred when trying to show stats keyboard")
 
 
 @dp.callback_query_handler(options_callback.filter(action="add"))
 async def approve_user(call: types.CallbackQuery, callback_data: dict):
-    user_id = callback_data.get("user_id")
-    user_name = callback_data.get("user_name")
-    chat_id = callback_data.get("chat_id")
-    priority = int(callback_data.get("priority"))
-    num = find_max(priority=priority)
-    await update_num(user_id=user_id, num=num, priority=priority)
-    msg = await bot.send_message(chat_id, text=f'@{user_name} is {num} in the queue with lab {priority}.')
-    await save_msg(msg)
-    await reset_quit(user_id)
-    await call.message.edit_reply_markup()
-    await delete_message(message_id=call.message.message_id, chat_id=int(ADMINS[0]))
+    try:
+        user_id = callback_data.get("user_id")
+        user_name = callback_data.get("user_name")
+        chat_id = callback_data.get("chat_id")
+        priority = int(callback_data.get("priority"))
+        num = find_max(priority=priority)
+        await update_num(user_id=user_id, num=num, priority=priority)
+        msg = await bot.send_message(chat_id, text=f'@{user_name} is {num} in the queue with lab {priority}.')
+        await save_msg(msg)
+        await reset_quit(user_id)
+        await call.message.edit_reply_markup()
+        await delete_message(message_id=call.message.message_id, chat_id=int(ADMINS[0]))
+    except Exception:
+        logger.exception("An error occurred when adding user to the queue")
 
 
 @dp.callback_query_handler(options_callback.filter(action="reject"))
 async def reject_user(call: types.CallbackQuery, callback_data: dict):
-    user_name = callback_data.get("user_name")
-    chat_id = callback_data.get("chat_id")
-    await call.message.reply(f'@{user_name} has not been added to the queue.')
-    msg = await bot.send_message(chat_id, text=f'@{user_name} has not been added to the queue.')
-    await save_msg(msg)
-    await delete_message(call.message)
+    try:
+        user_name = callback_data.get("user_name")
+        chat_id = callback_data.get("chat_id")
+        await call.message.reply(f'@{user_name} has not been added to the queue.')
+        msg = await bot.send_message(chat_id, text=f'@{user_name} has not been added to the queue.')
+        await save_msg(msg)
+        await delete_message(call.message)
+    except Exception:
+        logger.exception("An error occurred when rejecting user")
 
 
 @dp.callback_query_handler(lab_callback.filter())
 async def set_priority(call: types.CallbackQuery, callback_data: dict):
-    user_id = int(callback_data.get("user_id"))
-    if user_id == call.from_user.id:
-        user_name = callback_data.get("user_name")
-        priority = int(callback_data.get("pr_num"))
-        message_id = int(callback_data.get("message_id"))
-        present = callback_data.get("present")
-        if present == 'False':
-            num = find_max(priority=priority)
-            await add_user(user_id=user_id, user_name=user_name, priority=priority, number=num)
-        else:
-            priority_previous = await get_priority(user_id)
-            num_previous = await get_number(user_id)
-            if priority != priority_previous:
-                await update_queue(num_previous)
-                num = find_max(priority, user_id)
-                await update_num(user_id=user_id, num=num, priority=priority, change=True)
+    try:
+        user_id = int(callback_data.get("user_id"))
+        if user_id == call.from_user.id:
+            user_name = callback_data.get("user_name")
+            priority = int(callback_data.get("pr_num"))
+            message_id = int(callback_data.get("message_id"))
+            present = callback_data.get("present")
+            if present == 'False':
+                num = find_max(priority=priority)
+                await add_user(user_id=user_id, user_name=user_name, priority=priority, number=num)
             else:
-                num = num_previous
-        text = f"Yu are {num} in the queue with lab {priority}.\nUse /quit_queue command " \
-               f"when you finish your lab.\nUse /change_lab command to change your lab number."
-        await bot.answer_callback_query(call.id, text=text, show_alert=True)
-        await delete_message(call.message)
-        await delete_message(chat_id=call.message.chat.id, message_id=message_id)
+                priority_previous = await get_priority(user_id)
+                num_previous = await get_number(user_id)
+                if priority != priority_previous:
+                    await update_queue(num_previous)
+                    num = find_max(priority, user_id)
+                    await update_num(user_id=user_id, num=num, priority=priority, change=True)
+                else:
+                    num = num_previous
+            text = f"Yu are {num} in the queue with lab {priority}.\nUse /quit_queue command " \
+                   f"when you finish your lab.\nUse /change_lab command to change your lab number."
+            await bot.answer_callback_query(call.id, text=text, show_alert=True)
+            await delete_message(call.message)
+            await delete_message(chat_id=call.message.chat.id, message_id=message_id)
+    except Exception:
+        logger.exception("An error occurred when choosing labs")
+
+
+@dp.callback_query_handler(stats_callback.filter(option="reset"))
+async def reset_stats(call: types.CallbackQuery, callback_data: dict):
+    try:
+        user_id = callback_data.get("user_id")
+        if call.from_user.id == int(user_id) and user_id in ADMINS:
+            await call.message.edit_text("Are you sure you want to reset the stats?")
+            await call.message.edit_reply_markup(get_reset_stats_keyboard(user_id))
+    except Exception:
+        logger.exception("An error occurred when getting reset_stats keyboard")
 
 
 @dp.callback_query_handler(stats_callback.filter())
-async def avg_quit_num(call: types.CallbackQuery, callback_data: dict):
-    option = callback_data.get("option")
-    if option == "avg_quit_num":
-        avg_quit = await get_avg_quit_num()
-        await call.answer(text=f'{round(avg_quit)} people on average left the queue', show_alert=True)
-    else:
-        await delete_message(call.message)
+async def stats_options(call: types.CallbackQuery, callback_data: dict):
+    try:
+        option = callback_data.get("option")
+        if option == "avg_quit_num":
+            avg_quit = await get_avg_quit_num()
+            await call.answer(text=f'{round(avg_quit)} people on average left the queue', show_alert=True)
+        else:
+            await delete_message(call.message)
+    except Exception:
+        logger.exception("An error occurred in stats_options")
+
+
+@dp.callback_query_handler(reset_stats_callback.filter())
+async def reset_stats(call: types.CallbackQuery, callback_data: dict):
+    try:
+        option = callback_data.get("option")
+        user_id = callback_data.get('user_id')
+        if call.from_user.id == int(user_id):
+            if option != "back":
+                if option == "yes":
+                    await clear_stats()
+                    await call.answer(text="The stats were successfully reset", show_alert=True)
+                    await set_queue_id()
+                await delete_message(call.message)
+            else:
+                await call.message.edit_text("Choose the option you need:")
+                await call.message.edit_reply_markup(get_stats_keyboard(user_id))
+    except Exception:
+        logger.exception("An error occurred when trying to reset stats")
+
+
+
+

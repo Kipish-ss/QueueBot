@@ -318,7 +318,7 @@ async def get_avg_quit_num() -> int:
             query = "SELECT AVG(quit_num) FROM stats WHERE is_deleted = 1"
             async with conn.execute(query) as cursor:
                 avg_quit_num_tpl = await cursor.fetchone()
-        if avg_quit_num_tpl is not None:
+        if avg_quit_num_tpl[0]:
             avg_quit_num = avg_quit_num_tpl[0]
         else:
             avg_quit_num = 0
@@ -326,6 +326,15 @@ async def get_avg_quit_num() -> int:
     except Exception:
         logger.exception("An error occurred in get_avg_quit_num function")
 
+
+async def clear_stats() -> None:
+    try:
+        async with aiosqlite.connect(DB) as conn:
+            query = "DELETE FROM stats"
+            await conn.execute(query)
+            await conn.commit()
+    except Exception:
+        logger.exception("An unexpected error occurred in clear_stats function")
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
