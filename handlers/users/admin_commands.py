@@ -14,14 +14,17 @@ logger = get_logger()
 
 @dp.message_handler(commands=["delete_queue"])
 async def delete_queue(message: types.Message):
-    if str(message.from_user.id) in ADMINS:
-        await delete_message(message)
-        await message.answer(text="Are you sure you want to delete the queue?", reply_markup=get_delete_queue_keyboard(
-            message.from_user.id))
-    else:
-        msg = await message.reply("You do not have rights to use this command.")
-        await save_msg(msg)
-        await save_msg(message)
+    try:
+        if str(message.from_user.id) in ADMINS:
+            await delete_message(message)
+            await message.answer(text="Are you sure you want to delete the queue?", reply_markup=get_delete_queue_keyboard(
+                message.from_user.id))
+        else:
+            msg = await message.reply("You do not have rights to use this command.")
+            await save_msg(msg)
+            await save_msg(message)
+    except Exception:
+        logger.exception("An error occurred while handling /delete_queue command")
 
 
 @dp.message_handler(commands=['remove_user'])
@@ -64,9 +67,7 @@ async def delete_user(message: types.Message):
                 msg = await message.reply("This command must be sent as a reply.")
             await save_msg(msg)
         except Exception:
-            logger.exception("An unexpected error occurred.")
-            msg = await message.reply("An unexpected error occurred.")
-            await save_msg(msg)
+            logger.exception("An error occurred when /remove_user command wa used")
     else:
         msg = await message.reply("You do no have rights to use this command.")
         await save_msg(message)
@@ -100,7 +101,7 @@ async def remove_first(message: types.Message):
                 await save_msg(message)
             await save_msg(msg)
         except Exception:
-            logger.exception('An unexpected error occurred')
+            logger.exception('An error occurred when /next command was used')
             msg = await message.reply('An unexpected error occurred')
             await save_msg(msg)
     else:
@@ -119,7 +120,7 @@ async def clear_messages(message: types.Message):
                 for msg_id in id_list:
                     await delete_message(message_id=msg_id, chat_id=message.chat.id)
         except Exception:
-            logger.exception(f'An unexpected error occurred.')
+            logger.exception(f'An error occurred when clearing messages')
     else:
         msg = await message.reply("You do not have rights to use this command.")
         await save_msg(message)
@@ -128,14 +129,17 @@ async def clear_messages(message: types.Message):
 
 @dp.callback_query_handler(delete_queue_callback.filter())
 async def choose_delete_or_not(call: types.CallbackQuery, callback_data: dict):
-    option = callback_data.get("option")
-    user_id = int(callback_data.get("user_id"))
-    if call.from_user.id == user_id:
-        if option == "yes":
-            await call.message.edit_text("Do you want to save info about this queue?")
-            await call.message.edit_reply_markup(reply_markup=get_save_queue_keyboard(user_id))
-        else:
-            await delete_message(call.message)
+    try:
+        option = callback_data.get("option")
+        user_id = int(callback_data.get("user_id"))
+        if call.from_user.id == user_id:
+            if option == "yes":
+                await call.message.edit_text("Do you want to save info about this queue?")
+                await call.message.edit_reply_markup(reply_markup=get_save_queue_keyboard(user_id))
+            else:
+                await delete_message(call.message)
+    except Exception:
+        logger.exception("An error in delete_queue_keyboard occurred")
 
 
 @dp.callback_query_handler(save_queue_callback.filter(option="back"))
@@ -146,7 +150,7 @@ async def return_to_del_choice(call: types.CallbackQuery, callback_data: dict):
             await call.message.edit_text("Are you sure you want to delete the queue?")
             await call.message.edit_reply_markup(reply_markup=get_delete_queue_keyboard(user_id))
         except Exception:
-            logger.exception("An unexpected error occurred")
+            logger.exception("An error occurred when using back option in delete_keyboard")
 
 
 @dp.callback_query_handler(save_queue_callback.filter())
@@ -171,4 +175,4 @@ async def delete_queue(call: types.CallbackQuery, callback_data: dict):
             await call.answer(text, show_alert=True)
             await bot.send_message(chat_id=ADMINS[0], text=text)
         except Exception:
-            logger.exception('An unexpected error occurred')
+            logger.exception('An error occurred in save_queue_info_keyboard')
