@@ -25,4 +25,4 @@ async def delete_message(message: types.Message = None, message_id: int = 0, cha
     try:
         await bot.delete_message(chat_id=chat_id, message_id=msg_id)
     except (MessageCantBeDeleted, MessageToDeleteNotFound):
-        logger.exception(f"Message '{message.text}' cannot be deleted.")
+        logger.exception(f"Message cannot be deleted.")

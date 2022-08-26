@@ -16,6 +16,7 @@ logger = get_logger()
 
 @dp.message_handler(commands=["join_queue"])
 async def add_to_queue(message: types.Message):
+    await save_msg(message)
     try:
         present = await is_present(message.from_user.id)
         if not present:
@@ -24,15 +25,17 @@ async def add_to_queue(message: types.Message):
             else:
                 user_name = message.from_user.full_name
             try:
-                await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
+                choice_msg = await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
                     user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
                     present=present))
+                await save_msg(choice_msg)
             except ValueError:
                 logger.error('Resulted callback data is too long!\nPerhaps the username is too long.')
                 user_name = message.from_user.first_name
-                await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
+                choice_msg = await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
                     user_id=message.from_user.id, user_name=user_name, message_id=message.message_id,
                     present=present))
+                await save_msg(choice_msg)
         else:
             quit = await is_quit(message.from_user.id)
             priority = await get_priority(message.from_user.id)

@@ -3,6 +3,7 @@ from aiogram import executor
 from loader import dp
 from utils.notify import on_startup_notify
 import handlers
+from message_functions import save_msg
 from utils.set_bot_commands import set_default_commands
 from utils.misc.logging import get_logger
 from utils.db_api.queue_db import set_queue_id, is_deleted
@@ -23,7 +24,8 @@ async def on_startup(dispatcher):
 
 async def on_shutdown(dispatcher):
     try:
-        await dp.bot.send_message(CHAT, text='Goodbye!')
+        msg = await dp.bot.send_message(CHAT, text='Goodbye!')
+        await save_msg(msg)
     except Exception as ex:
         logger.exception(ex)
 
