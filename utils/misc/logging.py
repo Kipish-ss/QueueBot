@@ -10,7 +10,7 @@ class LevelFilter(logging.Filter):
         return record.levelno <= self.__level
 
 
-def get_logger(handle_info=True, handle_errors=True):
+def get_logger(handle_info=True, handle_errors=True, to_file=False):
     logger = logging.getLogger(__name__)
     format_str = u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s'
     formatter = logging.Formatter(format_str)
@@ -21,12 +21,14 @@ def get_logger(handle_info=True, handle_errors=True):
         file_info_handler.setLevel(logging.INFO)
         file_info_handler.addFilter(LevelFilter(logging.INFO))
         file_info_handler.setFormatter(formatter)
-        logger.addHandler(file_info_handler)
+        if to_file:
+            logger.addHandler(file_info_handler)
     if handle_errors:
         file_error_handler = logging.FileHandler(f'{path}/errors.log')
         file_error_handler.setLevel(logging.ERROR)
         file_error_handler.setFormatter(formatter)
-        logger.addHandler(file_error_handler)
+        if to_file:
+            logger.addHandler(file_error_handler)
     logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s',
                         level=logging.INFO)
     return logger
