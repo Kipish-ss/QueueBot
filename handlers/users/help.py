@@ -9,5 +9,8 @@ async def bot_help(message: types.Message):
     await save_msg(message)
     text = ("I am queue_bot. ",
             "Use me for making a queue.")
-    msg = await message.answer("\n".join(text))
+    try:
+        msg = await message.reply("\n".join(text))
+    except:
+        msg = await  message.answer("\n".join(text))
     await save_msg(msg)

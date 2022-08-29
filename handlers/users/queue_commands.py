@@ -153,6 +153,7 @@ async def show_queue_history(message: types.Message):
 
 @dp.message_handler(commands=['change_lab'])
 async def change_lab(message: types.Message):
+    await save_msg(message)
     try:
         user_id = message.from_user.id
         present = await is_present(user_id)
@@ -161,14 +162,13 @@ async def change_lab(message: types.Message):
             if not quit:
                 user_name = (message.from_user.username if message.from_user.username is not None
                              else message.from_user.full_name)
-                await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
+                msg = await message.reply(text='Choose your Lab:', reply_markup=get_lab_keyboard(
                     user_id=message.from_user.id, user_name=user_name,
                     message_id=message.message_id, present=present))
             else:
                 msg = await message.reply('You have quit the queue. Use /join_queue command '
                                           'if you want to rejoin the queue.')
-                await save_msg(msg)
-                await save_msg(message)
+            await save_msg(msg)
         else:
             msg = await message.reply("You are not in the queue.\nUse /join_queue command to join the queue.")
             await save_msg(msg)
